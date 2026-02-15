@@ -11,6 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import { colors, spacing, borderRadius, typography } from '../theme';
 
 export default function RegisterScreen({ navigation }) {
   const { register } = useAuth();
@@ -46,8 +47,10 @@ export default function RegisterScreen({ navigation }) {
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <Text style={styles.title}>Đăng ký</Text>
-      <TextInput style={styles.input} placeholder="Họ tên" value={name} onChangeText={setName} editable={!loading} />
+      <View style={styles.card}>
+        <Text style={styles.title}>Đăng ký</Text>
+        <Text style={styles.hint}>Tạo tài khoản để lưu tiến độ</Text>
+        <TextInput style={styles.input} placeholder="Họ tên" placeholderTextColor={colors.textMuted} value={name} onChangeText={setName} editable={!loading} />
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -79,16 +82,19 @@ export default function RegisterScreen({ navigation }) {
       <TouchableOpacity style={styles.link} onPress={() => navigation.navigate('Login')} disabled={loading}>
         <Text style={styles.linkText}>Đã có tài khoản? Đăng nhập</Text>
       </TouchableOpacity>
+      </View>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24 },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 24, textAlign: 'center' },
-  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12, marginBottom: 12 },
-  button: { backgroundColor: '#34C759', padding: 14, borderRadius: 8, alignItems: 'center', marginTop: 8 },
+  container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#F8FAFC' },
+  card: { backgroundColor: '#fff', borderRadius: 16, padding: 24, marginHorizontal: 16, borderWidth: 1, borderColor: '#E2E8F0' },
+  title: { fontSize: 24, fontWeight: '700', marginBottom: 4, color: '#1E293B' },
+  hint: { fontSize: 13, color: '#64748B', marginBottom: 16 },
+  input: { borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, marginBottom: 12, fontSize: 16 },
+  button: { backgroundColor: '#10B981', padding: 16, borderRadius: 12, alignItems: 'center', marginTop: 8 },
   buttonText: { color: '#fff', fontWeight: '600' },
-  link: { marginTop: 16, alignItems: 'center' },
-  linkText: { color: '#007AFF' },
+  link: { marginTop: 20, alignItems: 'center' },
+  linkText: { color: '#6366F1' },
 });

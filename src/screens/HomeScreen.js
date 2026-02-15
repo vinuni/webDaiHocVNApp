@@ -9,6 +9,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { apiClient } from '../api/client';
+import { colors, spacing, borderRadius, typography } from '../theme';
 
 export default function HomeScreen({ navigation }) {
   const [data, setData] = useState(null);
@@ -38,7 +39,7 @@ export default function HomeScreen({ navigation }) {
   if (loading && !data) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -71,16 +72,17 @@ export default function HomeScreen({ navigation }) {
       <FlatList
         data={de_this}
         keyExtractor={(item) => String(item.id)}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} />}
         ListEmptyComponent={
-          <Text style={styles.empty}>
+          <View style={styles.emptyWrap}><Text style={styles.empty}>
             {selectedMonThiId ? 'Không có đề nào.' : 'Chọn môn thi ở trên.'}
-          </Text>
+          </Text></View>
         }
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.deThiRow}
             onPress={() => navigation.navigate('ExamTake', { deThiId: item.id, tendethi: item.tendethi })}
+            activeOpacity={0.7}
           >
             <Text style={styles.deThiTitle}>{item.tendethi}</Text>
             <Text style={styles.deThiMeta}>{item.thoigian} phút</Text>
@@ -92,17 +94,18 @@ export default function HomeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 4 },
-  subtitle: { fontSize: 14, color: '#666', marginBottom: 8 },
-  monList: { paddingVertical: 8, gap: 8 },
-  monChip: { paddingHorizontal: 16, paddingVertical: 8, backgroundColor: '#f0f0f0', borderRadius: 20, marginRight: 8 },
-  monChipActive: { backgroundColor: '#007AFF' },
-  monChipText: {},
+  container: { flex: 1, padding: spacing.md, backgroundColor: colors.background },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
+  title: { ...typography.titleSmall, marginBottom: 4, color: colors.text },
+  subtitle: { ...typography.bodySmall, color: colors.textSecondary, marginBottom: 8 },
+  monList: { paddingVertical: 8 },
+  monChip: { paddingHorizontal: 16, paddingVertical: 8, backgroundColor: colors.surface, borderRadius: borderRadius.full, marginRight: 8, borderWidth: 1, borderColor: colors.border },
+  monChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  monChipText: { ...typography.bodySmall, color: colors.text },
   monChipTextActive: { color: '#fff' },
-  deThiRow: { padding: 16, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  deThiTitle: { fontSize: 16, fontWeight: '600' },
-  deThiMeta: { fontSize: 12, color: '#666', marginTop: 4 },
-  empty: { padding: 24, textAlign: 'center', color: '#666' },
+  deThiRow: { padding: 16, backgroundColor: colors.surface, borderRadius: borderRadius.md, marginBottom: 8, borderWidth: 1, borderColor: colors.border },
+  deThiTitle: { ...typography.subtitle, color: colors.text },
+  deThiMeta: { ...typography.caption, color: colors.textSecondary, marginTop: 4 },
+  emptyWrap: { padding: 24, alignItems: 'center' },
+  empty: { ...typography.body, color: colors.textSecondary },
 });

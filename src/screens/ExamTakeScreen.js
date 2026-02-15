@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { apiClient } from '../api/client';
+import MathText from '../components/MathText';
+import { colors, spacing, borderRadius, typography } from '../theme';
 
 export default function ExamTakeScreen({ route, navigation }) {
   const { deThiId, tendethi } = route.params || {};
@@ -55,21 +57,24 @@ export default function ExamTakeScreen({ route, navigation }) {
     }
   };
 
-  if (loading) return (<View style={styles.centered}><ActivityIndicator size="large" /></View>);
-  if (!questions.length) return (<View style={styles.centered}><Text>Không có câu hỏi.</Text></View>);
+  if (loading) return (<View style={styles.centered}><ActivityIndicator size="large" color={colors.primary} /></View>);
+  if (!questions.length) return (<View style={styles.centered}><Text style={styles.emptyText}>Không có câu hỏi.</Text></View>);
 
   const choices = ['A', 'B', 'C', 'D', 'E'];
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>{tendethi || deThi?.tendethi}</Text>
-        <Text style={styles.timer}>{minutesLeft} phút</Text>
+        <Text style={styles.title} numberOfLines={2}>{tendethi || deThi?.tendethi}</Text>
+        <View style={styles.timerBadge}>
+          <Text style={styles.timer}>{minutesLeft} phút</Text>
+        </View>
       </View>
-      <ScrollView style={styles.scroll}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {questions.map((q, idx) => (
           <View key={q.id} style={styles.questionBlock}>
-            <Text style={styles.qText}>Câu {idx + 1}. {q.cauhoi}</Text>
+            <Text style={styles.qLabel}>Câu {idx + 1}</Text>
+            <MathText value={q.cauhoi} containerStyle={styles.mathQuestion} />
             {choices.map((c) => {
               const opt = q['dapan' + c];
               if (!opt) return null;
@@ -79,15 +84,24 @@ export default function ExamTakeScreen({ route, navigation }) {
                   key={c}
                   style={[styles.option, selected && styles.optionSelected]}
                   onPress={() => setAnswer(q.id, c)}
+                  activeOpacity={0.7}
                 >
-                  <Text style={[styles.optionText, selected && styles.optionTextSelected]}>{c}. {opt}</Text>
+                  <Text style={[styles.optionLetter, selected && styles.optionLetterSelected]}>{c}.</Text>
+                  <View style={styles.optionContent}>
+                    <MathText value={opt} containerStyle={selected ? styles.optionMathSelected : undefined} />
+                  </View>
                 </TouchableOpacity>
               );
             })}
           </View>
         ))}
       </ScrollView>
-      <TouchableOpacity style={[styles.submitBtn, submitting && styles.submitBtnDisabled]} onPress={handleSubmit} disabled={submitting}>
+      <TouchableOpacity
+        style={[styles.submitBtn, submitting && styles.submitBtnDisabled]}
+        onPress={handleSubmit}
+        disabled={submitting}
+        activeOpacity={0.8}
+      >
         {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitBtnText}>Nộp bài</Text>}
       </TouchableOpacity>
     </View>
@@ -95,19 +109,65 @@ export default function ExamTakeScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  title: { fontSize: 18, fontWeight: '600', flex: 1 },
-  timer: { fontSize: 16, color: '#666' },
-  scroll: { flex: 1, padding: 16 },
-  questionBlock: { marginBottom: 24 },
-  qText: { fontSize: 15, marginBottom: 12 },
-  option: { padding: 12, backgroundColor: '#f5f5f5', borderRadius: 8, marginBottom: 8 },
-  optionSelected: { backgroundColor: '#007AFF' },
-  optionText: {},
-  optionTextSelected: { color: '#fff' },
-  submitBtn: { backgroundColor: '#34C759', padding: 16, alignItems: 'center' },
+  container: { flex: 1, backgroundColor: colors.background },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
+  emptyText: { ...typography.body, color: colors.textSecondary },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: spacing.md,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  title: { ...typography.subtitle, flex: 1, color: colors.text, marginRight: spacing.sm },
+  timerBadge: { backgroundColor: colors.primary, paddingHorizontal: spacing.sm, paddingVertical: spacing.xs, borderRadius: borderRadius.full },
+  timer: { ...typography.bodySmall, color: '#fff', fontWeight: '600' },
+  scroll: { flex: 1 },
+  scrollContent: { padding: spacing.md, paddingBottom: spacing.xl },
+  questionBlock: {
+    marginBottom: spacing.lg,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  qLabel: { ...typography.caption, color: colors.primary, fontWeight: '600', marginBottom: spacing.sm },
+  mathQuestion: { marginBottom: spacing.md },
+  option: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: spacing.md,
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.sm,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  optionSelected: { backgroundColor: colors.primary + '18', borderColor: colors.primary },
+  optionLetter: { ...typography.subtitle, color: colors.textSecondary, marginRight: spacing.sm, width: 24 },
+  optionLetterSelected: { color: colors.primary },
+  optionContent: { flex: 1 },
+  optionMathSelected: {},
+  submitBtn: {
+    backgroundColor: colors.success,
+    padding: spacing.md,
+    alignItems: 'center',
+    margin: spacing.md,
+    borderRadius: borderRadius.md,
+    shadowColor: colors.success,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
   submitBtnDisabled: { opacity: 0.7 },
-  submitBtnText: { color: '#fff', fontWeight: '600' },
+  submitBtnText: { color: '#fff', ...typography.subtitle },
 });

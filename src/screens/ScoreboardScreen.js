@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
 import { apiClient } from '../api/client';
+import { colors, spacing, borderRadius, typography } from '../theme';
 
 export default function ScoreboardScreen() {
   const [data, setData] = useState([]);
@@ -20,7 +21,7 @@ export default function ScoreboardScreen() {
 
   const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false); };
 
-  if (loading && !data.length) return (<View style={styles.centered}><ActivityIndicator size="large" /></View>);
+  if (loading && !data.length) return (<View style={styles.centered}><ActivityIndicator size="large" color={colors.primary} /></View>);
 
   return (
     <View style={styles.container}>
@@ -29,13 +30,13 @@ export default function ScoreboardScreen() {
         data={data}
         keyExtractor={(item, idx) => String(item.de_thi_id || idx)}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        ListEmptyComponent={<Text style={styles.empty}>Chua co ket qua.</Text>}
+        ListEmptyComponent={<View style={styles.emptyWrap}><Text style={styles.empty}>Chưa có kết quả.</Text></View>}
         renderItem={({ item, index }) => (
           <View style={styles.row}>
-            <Text style={styles.rank}>{index + 1}</Text>
+            <View style={styles.rankBadge}><Text style={styles.rank}>{index + 1}</Text></View>
             <View style={styles.rowContent}>
-              <Text style={styles.rowTitle}>{item.tendethi || 'De thi'}</Text>
-              <Text style={styles.rowMeta}>Diem: {item.diem != null ? Number(item.diem).toFixed(1) : '-'}</Text>
+              <Text style={styles.rowTitle}>{item.tendethi || 'Đề thi'}</Text>
+              <Text style={styles.rowMeta}>Điểm: {item.diem != null ? Number(item.diem).toFixed(1) : '–'}</Text>
             </View>
           </View>
         )}
@@ -45,13 +46,15 @@ export default function ScoreboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 16 },
-  row: { flexDirection: 'row', padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee', alignItems: 'center' },
-  rank: { width: 28, fontSize: 16, fontWeight: '600' },
+  container: { flex: 1, padding: spacing.md, backgroundColor: colors.background },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
+  title: { ...typography.titleSmall, marginBottom: 16, color: colors.text },
+  row: { flexDirection: 'row', padding: spacing.md, backgroundColor: colors.surface, borderRadius: borderRadius.md, marginBottom: spacing.sm, borderWidth: 1, borderColor: colors.border, alignItems: 'center' },
+  rankBadge: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', marginRight: spacing.md },
+  rank: { ...typography.bodySmall, fontWeight: '700', color: '#fff' },
   rowContent: { flex: 1 },
-  rowTitle: { fontSize: 15 },
-  rowMeta: { fontSize: 12, color: '#666', marginTop: 2 },
-  empty: { padding: 24, textAlign: 'center', color: '#666' },
+  rowTitle: { ...typography.body, color: colors.text },
+  rowMeta: { ...typography.caption, color: colors.textSecondary, marginTop: 2 },
+  emptyWrap: { padding: 24, alignItems: 'center' },
+  empty: { ...typography.body, color: colors.textSecondary },
 });

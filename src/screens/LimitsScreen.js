@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
 import { apiClient } from '../api/client';
+import { colors, spacing, borderRadius, typography } from '../theme';
 
 export default function LimitsScreen() {
   const [limits, setLimits] = useState(null);
@@ -15,7 +16,7 @@ export default function LimitsScreen() {
         apiClient.get('/api/v1/practice/recommendations').catch(() => []),
       ]);
       setLimits(lim);
-      setRec(Array.isArray(rec) ? rec : rec?.data || []);
+      setRec(Array.isArray(rec) ? rec : []);
     } catch {
       setLimits(null);
       setRec([]);
@@ -24,46 +25,38 @@ export default function LimitsScreen() {
 
   useEffect(() => { load(); }, []);
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await load();
-    setRefreshing(false);
-  };
+  const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false); };
 
-  if (loading && !limits) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
-  }
+  if (loading && !limits) return (<View style={styles.centered}><ActivityIndicator size="large" color={colors.primary} /></View>);
 
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      contentContainerStyle={styles.content}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} />}
     >
       <Text style={styles.title}>Giới hạn & Gợi ý</Text>
       {limits && (
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Sử dụng hôm nay</Text>
-          <Text style={styles.detail}>
-            Đề dài: {limits.long_used ?? 0} / {limits.long_limit ?? 0}
-          </Text>
-          <Text style={styles.detail}>
-            Đề ngắn: {limits.short_used ?? 0} / {limits.short_limit ?? 0}
-          </Text>
-          <Text style={styles.detail}>
-            {limits.can_take_long ? 'Có thể làm đề dài' : 'Đã hết lượt đề dài'}
-          </Text>
-          <Text style={styles.detail}>
-            {limits.can_take_short ? 'Có thể làm đề ngắn' : 'Đã hết lượt đề ngắn'}
-          </Text>
+          <View style={styles.row}>
+            <Text style={styles.detail}>Đề dài:</Text>
+            <Text style={styles.detailValue}>{limits.long_used ?? 0} / {limits.long_limit ?? 0}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.detail}>Đề ngắn:</Text>
+            <Text style={styles.detailValue}>{limits.short_used ?? 0} / {limits.short_limit ?? 0}</Text>
+          </View>
+          <View style={[styles.badge, (limits.can_take_long || limits.can_take_short) ? styles.badgeOk : styles.badgeLimit]}>
+            <Text style={styles.badgeText}>
+              {(limits.can_take_long || limits.can_take_short) ? 'Bạn còn lượt làm đề' : 'Đã hết lượt hôm nay'}
+            </Text>
+          </View>
         </View>
       )}
       <Text style={styles.sectionTitle}>Gợi ý luyện tập</Text>
       {recommendations.length === 0 ? (
-        <Text style={styles.empty}>Không có gợi ý.</Text>
+        <View style={styles.emptyCard}><Text style={styles.empty}>Không có gợi ý.</Text></View>
       ) : (
         recommendations.slice(0, 10).map((item, i) => (
           <View key={i} style={styles.recRow}>
@@ -76,14 +69,29 @@ export default function LimitsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  title: { fontSize: 22, fontWeight: 'bold', margin: 16, marginBottom: 8 },
-  card: { backgroundColor: '#f5f5f5', padding: 16, margin: 16, marginTop: 0, borderRadius: 8 },
-  cardTitle: { fontSize: 16, fontWeight: '600', marginBottom: 8 },
-  detail: { fontSize: 14, color: '#333', marginBottom: 4 },
-  sectionTitle: { fontSize: 18, fontWeight: '600', margin: 16, marginTop: 24 },
-  recRow: { padding: 12, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  recText: { fontSize: 14 },
-  empty: { padding: 16, color: '#666' },
+  container: { flex: 1, backgroundColor: colors.background },
+  content: { padding: spacing.md, paddingBottom: spacing.xl },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
+  title: { ...typography.titleSmall, marginBottom: spacing.sm, color: colors.text },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  cardTitle: { ...typography.subtitle, marginBottom: spacing.md, color: colors.text },
+  row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.sm },
+  detail: { ...typography.body, color: colors.textSecondary },
+  detailValue: { ...typography.body, color: colors.text, fontWeight: '600' },
+  badge: { marginTop: spacing.md, padding: spacing.sm, borderRadius: borderRadius.sm, alignItems: 'center' },
+  badgeOk: { backgroundColor: colors.success + '20' },
+  badgeLimit: { backgroundColor: colors.warning + '20' },
+  badgeText: { ...typography.bodySmall, fontWeight: '600' },
+  sectionTitle: { ...typography.subtitle, marginBottom: spacing.sm, color: colors.text },
+  recRow: { padding: spacing.md, backgroundColor: colors.surface, borderRadius: borderRadius.sm, marginBottom: spacing.sm, borderWidth: 1, borderColor: colors.border },
+  recText: { ...typography.body },
+  emptyCard: { padding: spacing.lg },
+  empty: { ...typography.body, color: colors.textSecondary },
 });

@@ -4,6 +4,14 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAuth } from '../auth/AuthContext';
 import { View, ActivityIndicator, Text } from 'react-native';
+import { colors, typography } from '../theme';
+
+const headerOptions = {
+  headerStyle: { backgroundColor: colors.surface },
+  headerTintColor: colors.text,
+  headerTitleStyle: { fontWeight: '600', fontSize: 18 },
+  headerShadowVisible: true,
+};
 
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
@@ -21,32 +29,41 @@ const Tab = createBottomTabNavigator();
 
 function AuthStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: true }}>
-      <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Dang nhap' }} />
-      <Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'Dang ky' }} />
+    <Stack.Navigator screenOptions={{ ...headerOptions, headerShown: true }}>
+      <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Đăng nhập' }} />
+      <Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'Đăng ký' }} />
     </Stack.Navigator>
   );
 }
 
 function MainTabs() {
   return (
-    <Tab.Navigator screenOptions={{ headerShown: true }}>
-      <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Trang chu' }} />
-      <Tab.Screen name="Topics" component={TopicsScreen} options={{ title: 'Hoc phan' }} />
-      <Tab.Screen name="Scoreboard" component={ScoreboardScreen} options={{ title: 'Bang diem' }} />
-      <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Tai khoan' }} />
-      <Tab.Screen name="Limits" component={LimitsScreen} options={{ title: 'Gioi han' }} />
+    <Tab.Navigator
+      screenOptions={{
+        ...headerOptions,
+        headerShown: true,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textMuted,
+        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
+        tabBarLabelStyle: { fontSize: 12, fontWeight: '500' },
+      }}
+    >
+      <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Trang chủ', tabBarLabel: 'Trang chủ' }} />
+      <Tab.Screen name="Topics" component={TopicsScreen} options={{ title: 'Học phần', tabBarLabel: 'Học phần' }} />
+      <Tab.Screen name="Scoreboard" component={ScoreboardScreen} options={{ title: 'Bảng điểm', tabBarLabel: 'Bảng điểm' }} />
+      <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Tài khoản', tabBarLabel: 'Tài khoản' }} />
+      <Tab.Screen name="Limits" component={LimitsScreen} options={{ title: 'Giới hạn', tabBarLabel: 'Giới hạn' }} />
     </Tab.Navigator>
   );
 }
 
 function MainStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: true }}>
+    <Stack.Navigator screenOptions={headerOptions}>
       <Stack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
-      <Stack.Screen name="TopicDetail" component={TopicDetailScreen} options={{ title: 'Chi tiet' }} />
-      <Stack.Screen name="ExamTake" component={ExamTakeScreen} options={{ title: 'Lam bai' }} />
-      <Stack.Screen name="Result" component={ResultScreen} options={{ title: 'Ket qua' }} />
+      <Stack.Screen name="TopicDetail" component={TopicDetailScreen} options={{ title: 'Chi tiết' }} />
+      <Stack.Screen name="ExamTake" component={ExamTakeScreen} options={{ title: 'Làm bài' }} />
+      <Stack.Screen name="Result" component={ResultScreen} options={{ title: 'Kết quả' }} />
     </Stack.Navigator>
   );
 }
@@ -56,9 +73,9 @@ export default function AppNavigator() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" />
-        <Text style={{ marginTop: 8 }}>Dang tai...</Text>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={{ marginTop: 8, color: colors.textSecondary }}>Đang tải...</Text>
       </View>
     );
   }
