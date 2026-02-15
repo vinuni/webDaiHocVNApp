@@ -1,7 +1,10 @@
 /**
  * API client for Laravel /api/v1.
  * Base URL from .env EXPO_PUBLIC_API_BASE_URL.
+ * Sends Bearer token from authStorage when present.
  */
+
+import { authStorage } from '../auth/storage';
 
 const BASE = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:8000';
 const baseURL = BASE.replace(/\/$/, '');
@@ -11,9 +14,11 @@ export const apiClient = {
 
   async request(path, options = {}) {
     const url = path.startsWith('http') ? path : `${baseURL}${path.startsWith('/') ? path : '/' + path}`;
+    const token = await authStorage.getToken();
     const headers = {
       Accept: 'application/json',
       ...(options.body && typeof options.body === 'string' ? { 'Content-Type': 'application/json' } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     };
     const res = await fetch(url, { ...options, headers });
