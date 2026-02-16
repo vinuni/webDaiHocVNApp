@@ -26,6 +26,11 @@ export const apiClient = {
     if (!res.ok) {
       const err = new Error(text || `HTTP ${res.status}`);
       err.status = res.status;
+      try {
+        err.body = text ? JSON.parse(text) : null;
+      } catch {
+        err.body = null;
+      }
       throw err;
     }
     try {
@@ -51,6 +56,36 @@ export const apiClient = {
       method: 'PUT',
       body: typeof body === 'object' ? JSON.stringify(body) : body,
     });
+  },
+
+  /**
+   * POST multipart/form-data (e.g. for ai-question with photo).
+   * Do not set Content-Type so the browser sets boundary.
+   */
+  async postFormData(path, formData) {
+    const url = path.startsWith('http') ? path : `${baseURL}${path.startsWith('/') ? path : '/' + path}`;
+    const token = await authStorage.getToken();
+    const headers = {
+      Accept: 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+    const res = await fetch(url, { method: 'POST', headers, body: formData });
+    const text = await res.text();
+    if (!res.ok) {
+      const err = new Error(text || `HTTP ${res.status}`);
+      err.status = res.status;
+      try {
+        err.body = text ? JSON.parse(text) : null;
+      } catch {
+        err.body = null;
+      }
+      throw err;
+    }
+    try {
+      return text ? JSON.parse(text) : null;
+    } catch {
+      return null;
+    }
   },
 };
 

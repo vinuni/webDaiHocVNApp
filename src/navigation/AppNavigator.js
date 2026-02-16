@@ -3,8 +3,14 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAuth } from '../auth/AuthContext';
-import { View, ActivityIndicator, Text } from 'react-native';
+import { View, ActivityIndicator, Text, Image } from 'react-native';
 import { colors, typography } from '../theme';
+
+const logo = require('../../assets/logo.png');
+
+function HeaderLogo() {
+  return <Image source={logo} style={{ width: 120, height: 32 }} resizeMode="contain" />;
+}
 
 const headerOptions = {
   headerStyle: { backgroundColor: colors.surface },
@@ -23,6 +29,9 @@ import ResultScreen from '../screens/ResultScreen';
 import ScoreboardScreen from '../screens/ScoreboardScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import LimitsScreen from '../screens/LimitsScreen';
+import GamificationScreen from '../screens/GamificationScreen';
+import HoiAiAskScreen from '../screens/HoiAiAskScreen';
+import HoiAiHistoryScreen from '../screens/HoiAiHistoryScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -36,12 +45,22 @@ function AuthStack() {
   );
 }
 
+function HoiAiStack() {
+  return (
+    <Stack.Navigator screenOptions={headerOptions}>
+      <Stack.Screen name="HoiAiAsk" component={HoiAiAskScreen} options={{ title: 'Hỏi AI' }} />
+      <Stack.Screen name="HoiAiHistory" component={HoiAiHistoryScreen} options={{ title: 'Lịch sử hỏi đáp' }} />
+    </Stack.Navigator>
+  );
+}
+
 function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={{
         ...headerOptions,
         headerShown: true,
+        headerTitle: () => <HeaderLogo />,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
@@ -50,6 +69,8 @@ function MainTabs() {
     >
       <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Trang chủ', tabBarLabel: 'Trang chủ' }} />
       <Tab.Screen name="Topics" component={TopicsScreen} options={{ title: 'Học phần', tabBarLabel: 'Học phần' }} />
+      <Tab.Screen name="Gamification" component={GamificationScreen} options={{ title: 'Thành tích', tabBarLabel: 'Thành tích' }} />
+      <Tab.Screen name="HoiAi" component={HoiAiStack} options={{ title: 'Hỏi AI', tabBarLabel: 'Hỏi AI', headerShown: false }} />
       <Tab.Screen name="Scoreboard" component={ScoreboardScreen} options={{ title: 'Bảng điểm', tabBarLabel: 'Bảng điểm' }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Tài khoản', tabBarLabel: 'Tài khoản' }} />
       <Tab.Screen name="Limits" component={LimitsScreen} options={{ title: 'Giới hạn', tabBarLabel: 'Giới hạn' }} />
