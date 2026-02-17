@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
 import { apiClient } from '../api/client';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { colors, spacing, borderRadius, typography, minTouchTargetSize } from '../theme';
 
 export default function LimitsScreen() {
   const [limits, setLimits] = useState(null);
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
   badgeLimit: { backgroundColor: colors.warning + '20' },
   badgeText: { ...typography.bodySmall, fontWeight: '600' },
   sectionTitle: { ...typography.subtitle, marginBottom: spacing.sm, color: colors.text },
-  recRow: { padding: spacing.md, backgroundColor: colors.surface, borderRadius: borderRadius.sm, marginBottom: spacing.sm, borderWidth: 1, borderColor: colors.border },
+  recRow: { padding: spacing.md, minHeight: minTouchTargetSize, justifyContent: 'center', backgroundColor: colors.surface, borderRadius: borderRadius.sm, marginBottom: spacing.sm, borderWidth: 1, borderColor: colors.border },
   recText: { ...typography.body },
   emptyCard: { padding: spacing.lg },
   empty: { ...typography.body, color: colors.textSecondary },

@@ -62,6 +62,16 @@ export function AuthProvider({ children }) {
     return data;
   };
 
+  const socialLogin = async (provider, accessToken) => {
+    const data = await apiClient.post('/api/v1/social-login', { provider, access_token: accessToken });
+    const t = data.token;
+    const u = data.user;
+    await authStorage.setToken(t);
+    await authStorage.setUser(u);
+    setAuth(t, u);
+    return data;
+  };
+
   const logout = async () => {
     try {
       await apiClient.post('/api/v1/logout');
@@ -73,7 +83,8 @@ export function AuthProvider({ children }) {
 
   const refreshUser = async () => {
     try {
-      const u = await apiClient.get('/api/v1/user');
+      const res = await apiClient.get('/api/v1/user');
+      const u = res?.user ?? res;
       await authStorage.setUser(u);
       setUser(u);
       return u;
@@ -90,6 +101,7 @@ export function AuthProvider({ children }) {
         loading,
         login,
         register,
+        socialLogin,
         logout,
         refreshUser,
         isAuthenticated: !!token,

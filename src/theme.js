@@ -1,5 +1,8 @@
+import { Platform } from 'react-native';
+
 /**
  * App-wide theme for a modern, consistent UI.
+ * On web use boxShadow (react-native-web deprecates shadow*); on native use shadow* + elevation.
  */
 export const colors = {
   primary: '#6366F1',
@@ -25,6 +28,9 @@ export const spacing = {
   xl: 32,
 };
 
+/** Minimum touch target size (pt) for accessibility and one-handed use on phones. */
+export const minTouchTargetSize = 44;
+
 export const borderRadius = {
   sm: 8,
   md: 12,
@@ -39,4 +45,23 @@ export const typography = {
   body: { fontSize: 15 },
   bodySmall: { fontSize: 13 },
   caption: { fontSize: 12 },
+};
+
+export const shadows = {
+  card: Platform.select({
+    web: { boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
+    default: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 3 },
+  }),
+  cardSm: Platform.select({
+    web: { boxShadow: '0 1px 2px rgba(0,0,0,0.05)' },
+    default: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 },
+  }),
+  buttonPrimary: Platform.select({
+    web: { boxShadow: '0 2px 4px rgba(99,102,241,0.3)' },
+    default: { shadowColor: colors.primary, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 2 },
+  }),
+  buttonSuccess: Platform.select({
+    web: { boxShadow: '0 2px 4px rgba(16,185,129,0.3)' },
+    default: { shadowColor: colors.success, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 3 },
+  }),
 };

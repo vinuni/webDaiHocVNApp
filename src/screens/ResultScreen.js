@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { apiClient } from '../api/client';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { colors, spacing, borderRadius, typography, minTouchTargetSize } from '../theme';
 
 export default function ResultScreen({ route, navigation }) {
   const { deThiId, tendethi, diem, correct, total } = route.params || {};
@@ -32,6 +32,15 @@ export default function ResultScreen({ route, navigation }) {
           </>
         )}
       </View>
+      {deThiId != null && (
+        <TouchableOpacity
+          style={styles.commentButton}
+          onPress={() => navigation.navigate('Comments', { commentableType: 'App\\DeThi', commentableId: deThiId, title: tendethi })}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.commentButtonText}>Bình luận đề thi</Text>
+        </TouchableOpacity>
+      )}
       <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Home')} activeOpacity={0.8}>
         <Text style={styles.buttonText}>Về trang chủ</Text>
       </TouchableOpacity>
@@ -48,6 +57,8 @@ const styles = StyleSheet.create({
   scoreValue: { fontSize: 42, fontWeight: '700', color: colors.primary },
   scoreLabel: { ...typography.caption, color: colors.textSecondary },
   detail: { ...typography.body, color: colors.textSecondary },
-  button: { backgroundColor: colors.primary, paddingVertical: 16, paddingHorizontal: 32, borderRadius: borderRadius.md },
+  commentButton: { marginBottom: 12, paddingVertical: 12, paddingHorizontal: 24, minHeight: minTouchTargetSize, justifyContent: 'center' },
+  commentButtonText: { ...typography.body, color: colors.primary },
+  button: { backgroundColor: colors.primary, paddingVertical: 16, paddingHorizontal: 32, borderRadius: borderRadius.md, minHeight: minTouchTargetSize, justifyContent: 'center', alignItems: 'center' },
   buttonText: { color: '#fff', ...typography.subtitle },
 });

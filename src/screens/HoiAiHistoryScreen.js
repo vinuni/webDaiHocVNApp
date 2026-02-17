@@ -9,7 +9,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { apiClient } from '../api/client';
-import { colors, spacing, borderRadius, typography, shadows } from '../theme';
+import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize } from '../theme';
 
 const PER_PAGE = 20;
 
@@ -143,6 +143,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     borderWidth: 1,
     borderColor: colors.border,
+    minHeight: minTouchTargetSize,
   },
   date: { ...typography.caption, color: colors.textMuted, marginBottom: 4 },
   question: { ...typography.subtitle, color: colors.text, marginBottom: 4 },

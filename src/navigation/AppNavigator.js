@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAuth } from '../auth/AuthContext';
-import { View, ActivityIndicator, Text, Image } from 'react-native';
+import { View, ActivityIndicator, Text, Image, Platform } from 'react-native';
 import { colors, typography } from '../theme';
 
 const logo = require('../../assets/logo.png');
@@ -32,6 +32,10 @@ import LimitsScreen from '../screens/LimitsScreen';
 import GamificationScreen from '../screens/GamificationScreen';
 import HoiAiAskScreen from '../screens/HoiAiAskScreen';
 import HoiAiHistoryScreen from '../screens/HoiAiHistoryScreen';
+import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
+import SearchScreen from '../screens/SearchScreen';
+import StudyMaterialsScreen from '../screens/StudyMaterialsScreen';
+import CommentsScreen from '../screens/CommentsScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -41,6 +45,7 @@ function AuthStack() {
     <Stack.Navigator screenOptions={{ ...headerOptions, headerShown: true }}>
       <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Đăng nhập' }} />
       <Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'Đăng ký' }} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ title: 'Quên mật khẩu' }} />
     </Stack.Navigator>
   );
 }
@@ -69,11 +74,9 @@ function MainTabs() {
     >
       <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Trang chủ', tabBarLabel: 'Trang chủ' }} />
       <Tab.Screen name="Topics" component={TopicsScreen} options={{ title: 'Học phần', tabBarLabel: 'Học phần' }} />
-      <Tab.Screen name="Gamification" component={GamificationScreen} options={{ title: 'Thành tích', tabBarLabel: 'Thành tích' }} />
       <Tab.Screen name="HoiAi" component={HoiAiStack} options={{ title: 'Hỏi AI', tabBarLabel: 'Hỏi AI', headerShown: false }} />
-      <Tab.Screen name="Scoreboard" component={ScoreboardScreen} options={{ title: 'Bảng điểm', tabBarLabel: 'Bảng điểm' }} />
+      <Tab.Screen name="Gamification" component={GamificationScreen} options={{ title: 'Thành tích', tabBarLabel: 'Thành tích' }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Tài khoản', tabBarLabel: 'Tài khoản' }} />
-      <Tab.Screen name="Limits" component={LimitsScreen} options={{ title: 'Giới hạn', tabBarLabel: 'Giới hạn' }} />
     </Tab.Navigator>
   );
 }
@@ -85,6 +88,11 @@ function MainStack() {
       <Stack.Screen name="TopicDetail" component={TopicDetailScreen} options={{ title: 'Chi tiết' }} />
       <Stack.Screen name="ExamTake" component={ExamTakeScreen} options={{ title: 'Làm bài' }} />
       <Stack.Screen name="Result" component={ResultScreen} options={{ title: 'Kết quả' }} />
+      <Stack.Screen name="StudyMaterials" component={StudyMaterialsScreen} options={{ title: 'Tài liệu học' }} />
+      <Stack.Screen name="Comments" component={CommentsScreen} options={{ title: 'Bình luận' }} />
+      <Stack.Screen name="Search" component={SearchScreen} options={{ title: 'Tìm kiếm' }} />
+      <Stack.Screen name="Scoreboard" component={ScoreboardScreen} options={{ title: 'Bảng điểm' }} />
+      <Stack.Screen name="Limits" component={LimitsScreen} options={{ title: 'Giới hạn' }} />
     </Stack.Navigator>
   );
 }
@@ -104,6 +112,36 @@ export default function AppNavigator() {
   return (
     <NavigationContainer>
       {isAuthenticated ? <MainStack /> : <AuthStack />}
+      {Platform.OS === 'web' && typeof document !== 'undefined' ? <BlurWhenTabHidden /> : null}
     </NavigationContainer>
   );
+}
+
+function BlurWhenTabHidden() {
+  useEffect(() => {
+    document.body.setAttribute('tabindex', '-1');
+    const moveFocusAway = () => {
+      const el = document.activeElement;
+      if (!el || !el.closest || el === document.body) return;
+      const inHidden = el.closest('[aria-hidden="true"]');
+      if (!inHidden) return;
+      el.blur?.();
+      if (document.activeElement === el) {
+        document.body.focus({ preventScroll: true });
+      }
+    };
+    const observer = new MutationObserver(() => {
+      const el = document.activeElement;
+      if (el && el.closest && el.closest('[aria-hidden="true"]')) {
+        moveFocusAway();
+      }
+    });
+    observer.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['aria-hidden'] });
+    const interval = setInterval(moveFocusAway, 100);
+    return () => {
+      observer.disconnect();
+      clearInterval(interval);
+    };
+  }, []);
+  return null;
 }

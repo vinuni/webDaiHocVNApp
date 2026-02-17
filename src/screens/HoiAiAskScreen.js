@@ -11,7 +11,7 @@ import {
   Image,
 } from 'react-native';
 import { apiClient } from '../api/client';
-import { colors, spacing, borderRadius, typography, shadows } from '../theme';
+import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize } from '../theme';
 
 let ImagePicker = null;
 try {
@@ -191,6 +191,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     borderRadius: borderRadius.md,
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: minTouchTargetSize,
   },
   submitBtnText: { ...typography.subtitle, color: '#fff' },
   card: {

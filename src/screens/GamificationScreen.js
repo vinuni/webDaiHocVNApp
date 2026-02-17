@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { apiClient } from '../api/client';
-import { colors, spacing, borderRadius, typography, shadows } from '../theme';
+import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize } from '../theme';
 
 export default function GamificationScreen() {
   const [data, setData] = useState(null);
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   progressWrap: { height: 6, backgroundColor: colors.border, borderRadius: 3, marginTop: spacing.sm, overflow: 'hidden' },
   progressBar: { height: '100%', backgroundColor: colors.primary, borderRadius: 3 },
   challengeReward: { ...typography.caption, color: colors.success, marginTop: 4 },
-  leaderRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border },
+  leaderRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm, minHeight: minTouchTargetSize, borderBottomWidth: 1, borderBottomColor: colors.border },
   leaderRank: { ...typography.subtitle, color: colors.textMuted, width: 32 },
   leaderInfo: { flex: 1 },
   leaderName: { ...typography.body, color: colors.text },

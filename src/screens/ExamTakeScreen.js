@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiClient } from '../api/client';
 import MathText from '../components/MathText';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize } from '../theme';
 
 export default function ExamTakeScreen({ route, navigation }) {
+  const insets = useSafeAreaInsets();
   const { deThiId, tendethi } = route.params || {};
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -63,7 +65,7 @@ export default function ExamTakeScreen({ route, navigation }) {
   const choices = ['A', 'B', 'C', 'D', 'E'];
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom, paddingLeft: insets.left + spacing.md, paddingRight: insets.right + spacing.md }]}>
       <View style={styles.header}>
         <Text style={styles.title} numberOfLines={2}>{tendethi || deThi?.tendethi}</Text>
         <View style={styles.timerBadge}>
@@ -120,11 +122,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    ...shadows.cardSm,
   },
   title: { ...typography.subtitle, flex: 1, color: colors.text, marginRight: spacing.sm },
   timerBadge: { backgroundColor: colors.primary, paddingHorizontal: spacing.sm, paddingVertical: spacing.xs, borderRadius: borderRadius.full },
@@ -145,6 +143,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     padding: spacing.md,
+    minHeight: minTouchTargetSize,
     backgroundColor: colors.background,
     borderRadius: borderRadius.md,
     marginBottom: spacing.sm,
@@ -160,13 +159,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.success,
     padding: spacing.md,
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: minTouchTargetSize,
     margin: spacing.md,
     borderRadius: borderRadius.md,
-    shadowColor: colors.success,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
+    ...shadows.buttonSuccess,
   },
   submitBtnDisabled: { opacity: 0.7 },
   submitBtnText: { color: '#fff', ...typography.subtitle },

@@ -17,13 +17,72 @@ function escapeHtml(s) {
     .replace(/'/g, '&#39;');
 }
 
-function wrapWithParagraphs(text) {
-  const t = escapeHtml(text || '').trim();
-  if (!t) return '<p></p>';
-  return t
-    .split(/\n+/)
-    .map((p) => `<p style="margin:0 0 8px 0;line-height:1.5">${p}</p>`)
-    .join('');
+/** Strip HTML tags from API content (e.g. <p>...</p>) so LaTeX is not broken and tags are not shown. */
+function stripHtmlTags(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/<\/p>\s*<p>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<p>/gi, '')
+    .replace(/<\/p>/gi, '')
+    .replace(/<[^>]+>/g, '')
+    .trim();
+}
+
+/** Wrap content for MathJax without <p> tags so equations are not broken. Use single div + br for newlines. */
+function wrapContent(text) {
+  const t = escapeHtml(stripHtmlTags(text)).trim();
+  if (!t) return '';
+  return t.split(/\n+/).join('<br/>');
+}
+
+const MATHJAX_URLS = [
+  'https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js',
+  'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js',
+  '/mathjax/tex-mml-chtml.js',
+];
+
+const MATHJAX_CONFIG = `
+  MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\\\(', '\\\\)']], displayMath: [['\\\\[', '\\\\]'], ['$$', '$$']], processEscapes: true },
+    startup: { typeset: false }
+  };
+`;
+
+function getMathJaxLoader(heightCb, baseOrigin) {
+  const base = baseOrigin || '';
+  return `
+(function(){
+  var urls = ${JSON.stringify(MATHJAX_URLS)};
+  var baseOrigin = ${JSON.stringify(base)};
+  var idx = 0;
+  function resolveUrl(url) {
+    if (!url.startsWith('/')) return url;
+    var origin = baseOrigin || (typeof location!=='undefined'&&location.origin&&location.origin!=='null'?location.origin:'') || '';
+    return origin ? origin.replace(/\\/$/,'') + url : url;
+  }
+  function load(){
+    if (idx >= urls.length) return;
+    var s = document.createElement('script');
+    s.onload = run;
+    s.onerror = function(){ idx++; load(); };
+    s.src = resolveUrl(urls[idx]);
+    document.head.appendChild(s);
+  }
+  function run(){
+    if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+      var el = document.getElementById('content');
+      if (el) {
+        MathJax.typesetPromise([el]).then(function(){
+          var h = document.body.scrollHeight;
+          ${heightCb}
+        }).catch(function(){});
+      }
+    } else { setTimeout(run, 30); }
+  }
+  load();
+})();
+`;
 }
 
 const MATHJAX_HTML = (bodyContent) => `
@@ -31,23 +90,15 @@ const MATHJAX_HTML = (bodyContent) => `
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-  <script>
-    MathJax = {
-      tex: { inlineMath: [['\\\\(', '\\\\)']], displayMath: [['\\\\[', '\\\\]'], ['$$', '$$']] },
-      startup: { typeset: false }
-    };
-  </script>
+  <script>${MATHJAX_CONFIG}</script>
   <style>
     body { margin: 0; padding: 8px; font-size: 15px; color: #1E293B; line-height: 1.5; }
-    p { margin: 0 0 8px 0; }
+    #content { margin: 0; }
   </style>
 </head>
 <body>
   <div id="content">${bodyContent}</div>
-  <script>
-    MathJax.typesetPromise([document.getElementById('content')]).catch(function() {});
-  </script>
+  <script>${getMathJaxLoader("try{window.ReactNativeWebView&&window.ReactNativeWebView.postMessage(String(h));}catch(e){}")}</script>
 </body>
 </html>
 `;
@@ -56,7 +107,7 @@ export default function MathText({ value, style, containerStyle }) {
   const [height, setHeight] = useState(60);
   const webRef = useRef(null);
 
-  const content = wrapWithParagraphs(value);
+  const content = wrapContent(value);
   const html = MATHJAX_HTML(content);
 
   if (Platform.OS === 'web') {
@@ -80,7 +131,7 @@ export default function MathText({ value, style, containerStyle }) {
             setTimeout(function() {
               var h = document.body.scrollHeight;
               window.ReactNativeWebView && window.ReactNativeWebView.postMessage(String(h));
-            }, 500);
+            }, 1000);
           })();
           true;
         `}
@@ -90,36 +141,49 @@ export default function MathText({ value, style, containerStyle }) {
 }
 
 function MathTextWeb({ value, style, containerStyle }) {
-  const divRef = useRef(null);
   const content = value || '';
+  const [height, setHeight] = useState(80);
 
-  useEffect(() => {
-    if (typeof document === 'undefined' || !divRef.current) return;
-    const el = divRef.current;
-    if (el.innerHTML !== undefined) {
-      el.innerHTML = wrapWithParagraphs(content);
-      if (typeof window !== 'undefined' && window.MathJax && window.MathJax.typesetPromise) {
-        window.MathJax.typesetPromise([el]).catch(() => {});
-      }
-    }
+  const html = React.useMemo(() => {
+    const bodyContent = wrapContent(content);
+    const heightCb = "try{window.parent.postMessage(JSON.stringify({type:'mathjaxHeight',height:h}),'*');}catch(e){}";
+    const origin = typeof window !== 'undefined' && window.location && window.location.origin ? window.location.origin : '';
+    return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<script>${MATHJAX_CONFIG}</script>
+<style>body{margin:0;padding:8px;font-size:15px;color:#1E293B;line-height:1.5}#content{margin:0}</style></head>
+<body><div id="content">${bodyContent}</div>
+<script>${getMathJaxLoader(heightCb, origin)}</script></body></html>`;
   }, [content]);
 
   useEffect(() => {
-    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
-    if (window.MathJax) return;
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
-    script.async = true;
-    script.onload = () => {
-      window.MathJax = { tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]'], ['$$', '$$']] } };
-      if (divRef.current && divRef.current.innerHTML) window.MathJax.typesetPromise([divRef.current]).catch(() => {});
+    const handler = (e) => {
+      try {
+        const d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+        if (d && d.type === 'mathjaxHeight' && typeof d.height === 'number' && d.height > 0) setHeight(d.height);
+      } catch (_) {}
     };
-    document.head.appendChild(script);
-    return () => { try { document.head.removeChild(script); } catch (_) {} };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
   }, []);
 
+  if (typeof document === 'undefined') {
+    return <View style={[styles.webContent, style, containerStyle]} />;
+  }
+
   return (
-    <View ref={divRef} style={[styles.webContent, style, containerStyle]} />
+    <View style={[styles.webContent, { minHeight: height }, style, containerStyle]}>
+      <iframe
+        srcDoc={html}
+        title="Math content"
+        style={{
+          width: '100%',
+          minHeight: height,
+          border: 0,
+          background: 'transparent',
+          display: 'block',
+        }}
+      />
+    </View>
   );
 }
 

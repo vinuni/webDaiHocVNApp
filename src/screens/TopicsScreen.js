@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { apiClient } from '../api/client';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { colors, spacing, borderRadius, typography, minTouchTargetSize } from '../theme';
 
 export default function TopicsScreen({ navigation }) {
   const [monThis, setMonThis] = useState([]);
@@ -71,6 +71,8 @@ const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
+    minHeight: minTouchTargetSize,
+    justifyContent: 'center',
     backgroundColor: colors.surface,
     borderRadius: borderRadius.full,
     marginRight: spacing.sm,
@@ -85,6 +87,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.md,
+    minHeight: minTouchTargetSize,
     backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
     marginBottom: spacing.sm,
