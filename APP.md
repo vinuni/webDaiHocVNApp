@@ -141,6 +141,107 @@ webDaiHocVN73App/
 
 ---
 
+## 🧪 Testing
+
+### 1. Unit tests (Jest)
+
+From the project root:
+
+```bash
+npm test
+```
+
+Runs all unit tests (theme, sessionManager, API client, home data normalization). Watch mode:
+
+```bash
+npm run test:watch
+```
+
+**Test files:**
+
+| Path | What’s tested |
+|------|----------------|
+| `src/__tests__/theme.test.js` | Theme exports (colors, spacing, gradients, typography, etc.) |
+| `src/__tests__/homeData.test.js` | Home API response normalization logic |
+| `src/auth/__tests__/sessionManager.test.js` | Session clear and onUnauthorized callback |
+| `src/api/__tests__/client.test.js` | API client URL building, auth header, 401 calls clearSession |
+
+### 2. Home API test (manual)
+
+Verifies that `GET /api/v1/home` returns the expected shape. Requires the Laravel backend running; use an auth token if the route is protected.
+
+```bash
+npm run test:api
+```
+
+**PowerShell (with token):**
+
+```powershell
+$env:TOKEN="your-bearer-token"
+npm run test:api
+```
+
+---
+
+## 📦 Production build (Android)
+
+### Option A: EAS Build (recommended)
+
+Expo Application Services (EAS) builds the app in the cloud and produces an AAB/APK.
+
+1. **Install EAS CLI and log in**
+   ```bash
+   npm install -g eas-cli
+   eas login
+   ```
+
+2. **Configure the project (first time only)**
+   ```bash
+   eas build:configure
+   ```
+   This creates `eas.json`. For Android production, use profile `production` (or add one).
+
+3. **Set production API URL**
+   In EAS dashboard or via env: set `EXPO_PUBLIC_API_BASE_URL` to your production API (e.g. `https://your-api.com`). You can add this in **eas.json** under the build profile:
+   ```json
+   "env": {
+     "EXPO_PUBLIC_API_BASE_URL": "https://your-api.com"
+   }
+   ```
+
+4. **Build Android production AAB (for Play Store)**
+   ```bash
+   eas build --platform android --profile production
+   ```
+   Or APK for direct install:
+   ```bash
+   eas build --platform android --profile production
+   ```
+   In `eas.json`, under the production profile, set `"buildType": "apk"` if you want an APK instead of AAB.
+
+5. **Download the build** from the link EAS prints, or from [expo.dev](https://expo.dev) → your project → Builds.
+
+### Option B: Local Android build (Expo prebuild + Android Studio)
+
+1. **Generate native Android project**
+   ```bash
+   npx expo prebuild --platform android
+   ```
+
+2. **Open in Android Studio**  
+   Open the `android` folder, then **Build → Generate Signed Bundle / APK**. Choose **Android App Bundle (AAB)** for Play Store or **APK** for direct install. Create or use an existing keystore.
+
+3. **Set production API URL**  
+   Before building, set `EXPO_PUBLIC_API_BASE_URL` in `.env` or export it so the app points to your production API.
+
+### Checklist before production
+
+- [ ] `EXPO_PUBLIC_API_BASE_URL` points to the production API (HTTPS).
+- [ ] Version and build number updated in `app.json` (`expo.version`, and `expo.android.versionCode` if you use it).
+- [ ] Signing: EAS manages it by default; for local builds use your own keystore.
+
+---
+
 ## 🚀 Suggested Next Ports (Priority)
 
 1. **PRO / limits** – Show upgrade CTA and link to web or future in-app purchase when backend is ready.
