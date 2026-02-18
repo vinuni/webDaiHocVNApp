@@ -29,10 +29,27 @@ function stripHtmlTags(s) {
     .trim();
 }
 
+/**
+ * Escape literal & inside math for LaTeX (MathJax "Misplaced &" fix).
+ * Replace &amp; (standalone ampersand) with \&amp; so MathJax sees \&.
+ * Do not replace &amp; when part of &amp;gt;, &amp;lt;, &amp;quot;, &amp;#39;, etc.
+ */
+function escapeAmpInMath(str) {
+  return str.replace(/&amp;(?!gt;|lt;|quot;|#\d+;|#x[0-9a-fA-F]+;)/gi, '\\&amp;');
+}
+
+/** Prevent </script> in content from breaking the HTML document. */
+function escapeScriptTag(s) {
+  if (s == null) return '';
+  return String(s).replace(/<\/script>/gi, '<\\/script>');
+}
+
 /** Wrap content for MathJax without <p> tags so equations are not broken. Use single div + br for newlines. */
 function wrapContent(text) {
-  const t = escapeHtml(stripHtmlTags(text)).trim();
+  let t = escapeHtml(stripHtmlTags(text)).trim();
   if (!t) return '';
+  t = escapeAmpInMath(t);
+  t = escapeScriptTag(t);
   return t.split(/\n+/).join('<br/>');
 }
 
@@ -76,9 +93,11 @@ function getMathJaxLoader(heightCb, baseOrigin) {
         MathJax.typesetPromise([el]).then(function(){
           var h = document.body.scrollHeight;
           ${heightCb}
-        }).catch(function(){});
+        }).catch(function(){ try{ var h = document.body.scrollHeight; window.ReactNativeWebView && window.ReactNativeWebView.postMessage(String(h)); } catch(e) {} });
       }
-    } else { setTimeout(run, 30); }
+    } else {
+      setTimeout(run, 80);
+    }
   }
   load();
 })();
@@ -89,11 +108,13 @@ const MATHJAX_HTML = (bodyContent) => `
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <script>${MATHJAX_CONFIG}</script>
   <style>
-    body { margin: 0; padding: 8px; font-size: 15px; color: #1E293B; line-height: 1.5; }
-    #content { margin: 0; }
+    body { margin: 0; padding: 8px; font-size: 15px; color: #1E293B; line-height: 1.5; -webkit-text-size-adjust: 100%; }
+    #content { margin: 0; word-wrap: break-word; }
+    mjx-container { overflow-x: auto; overflow-y: hidden; }
   </style>
 </head>
 <body>
@@ -119,8 +140,10 @@ export default function MathText({ value, style, containerStyle }) {
       <WebView
         ref={webRef}
         source={{ html }}
-        originWhitelist={['*']}
+        originWhitelist={['*', 'https://*', 'http://*']}
         scrollEnabled={false}
+        javaScriptEnabled
+        domStorageEnabled
         style={[styles.webView, { minHeight: height }]}
         onMessage={(e) => {
           const h = parseInt(e.nativeEvent.data, 10);
@@ -130,8 +153,8 @@ export default function MathText({ value, style, containerStyle }) {
           (function() {
             setTimeout(function() {
               var h = document.body.scrollHeight;
-              window.ReactNativeWebView && window.ReactNativeWebView.postMessage(String(h));
-            }, 1000);
+              if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(String(h));
+            }, 1500);
           })();
           true;
         `}

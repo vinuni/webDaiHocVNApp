@@ -2,9 +2,11 @@
  * API client for Laravel /api/v1.
  * Base URL from .env EXPO_PUBLIC_API_BASE_URL.
  * Sends Bearer token from authStorage when present.
+ * On 401 Unauthorized, clears session so the app shows login (auth-only policy).
  */
 
 import { authStorage } from '../auth/storage';
+import { clearSession } from '../auth/sessionManager';
 
 const BASE = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:8000';
 const baseURL = BASE.replace(/\/$/, '');
@@ -24,6 +26,9 @@ export const apiClient = {
     const res = await fetch(url, { ...options, headers });
     const text = await res.text();
     if (!res.ok) {
+      if (res.status === 401) {
+        await clearSession();
+      }
       const err = new Error(text || `HTTP ${res.status}`);
       err.status = res.status;
       try {
@@ -72,6 +77,7 @@ export const apiClient = {
     const res = await fetch(url, { method: 'POST', headers, body: formData });
     const text = await res.text();
     if (!res.ok) {
+      if (res.status === 401) await clearSession();
       const err = new Error(text || `HTTP ${res.status}`);
       err.status = res.status;
       try {

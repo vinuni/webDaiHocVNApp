@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authStorage } from './storage';
+import { setOnUnauthorized } from './sessionManager';
 import { apiClient } from '../api/client';
 
 const AuthContext = createContext(null);
@@ -35,6 +36,14 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     loadStoredAuth();
+  }, []);
+
+  // When API returns 401, session is cleared; update state so app shows login.
+  useEffect(() => {
+    setOnUnauthorized(() => {
+      setTokenState(null);
+      setUser(null);
+    });
   }, []);
 
   const login = async (email, password) => {

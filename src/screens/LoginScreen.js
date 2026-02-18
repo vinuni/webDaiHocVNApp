@@ -10,9 +10,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  ScrollView,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../auth/AuthContext';
-import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize } from '../theme';
+import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize, gradients, iconSizes } from '../theme';
 
 const logo = require('../../assets/logo.png');
 
@@ -90,71 +93,171 @@ export default function LoginScreen({ navigation }) {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.card}>
-        <Image source={logo} style={styles.logo} resizeMode="contain" />
-        <Text style={styles.title}>Đăng nhập</Text>
-        <Text style={styles.hint}>Chào bạn, đăng nhập để tiếp tục</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor={colors.textMuted}
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          editable={!loading}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Mật khẩu"
-          placeholderTextColor={colors.textMuted}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          editable={!loading}
-        />
-        <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading} activeOpacity={0.8}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Đăng nhập</Text>}
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.link} onPress={() => navigation.navigate('ForgotPassword')} disabled={loading}>
-          <Text style={styles.linkText}>Quên mật khẩu?</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.link} onPress={() => navigation.navigate('Register')} disabled={loading}>
-          <Text style={styles.linkText}>Chưa có tài khoản? Đăng ký</Text>
-        </TouchableOpacity>
-        {hasGoogleConfig && <GoogleLoginButton />}
-        {!hasGoogleConfig && (
-          <View style={styles.socialRow}>
-            <Text style={styles.socialHint}>Đăng nhập Facebook (sắp ra mắt)</Text>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Gradient Header */}
+        <LinearGradient
+          colors={gradients.primary}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.header}
+        >
+          <View style={styles.logoContainer}>
+            <Image source={logo} style={styles.logo} resizeMode="contain" tintColor="#fff" />
           </View>
-        )}
-      </View>
+          <Text style={styles.headerTitle}>Thi Thử Online</Text>
+          <Text style={styles.headerSubtitle}>Nền tảng luyện thi THPT Quốc Gia</Text>
+        </LinearGradient>
+
+        {/* Login Card */}
+        <View style={styles.card}>
+          <Text style={styles.title}>Đăng nhập</Text>
+          <Text style={styles.hint}>Chào mừng bạn trở lại!</Text>
+          
+          <View style={styles.inputContainer}>
+            <Ionicons name="mail-outline" size={iconSizes.md} color={colors.textMuted} style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              placeholderTextColor={colors.textMuted}
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              editable={!loading}
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Ionicons name="lock-closed-outline" size={iconSizes.md} color={colors.textMuted} style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Mật khẩu"
+              placeholderTextColor={colors.textMuted}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              editable={!loading}
+            />
+          </View>
+
+          <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading} activeOpacity={0.8}>
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <View style={styles.buttonContent}>
+                <Text style={styles.buttonText}>Đăng nhập</Text>
+                <Ionicons name="arrow-forward" size={iconSizes.md} color="#fff" />
+              </View>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.link} onPress={() => navigation.navigate('ForgotPassword')} disabled={loading}>
+            <Text style={styles.linkText}>Quên mật khẩu?</Text>
+          </TouchableOpacity>
+
+          {hasGoogleConfig && (
+            <>
+              <View style={styles.divider}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>hoặc</Text>
+                <View style={styles.dividerLine} />
+              </View>
+              <GoogleLoginButton />
+            </>
+          )}
+
+          <View style={styles.registerRow}>
+            <Text style={styles.registerText}>Chưa có tài khoản? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Register')} disabled={loading}>
+              <Text style={styles.registerLink}>Đăng ký ngay</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: spacing.lg, backgroundColor: colors.background },
+  container: { 
+    flex: 1, 
+    backgroundColor: colors.background 
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  header: {
+    paddingTop: Platform.OS === 'ios' ? spacing.xxl + 20 : spacing.xl,
+    paddingBottom: spacing.xxl,
+    paddingHorizontal: spacing.xl,
+    alignItems: 'center',
+    borderBottomLeftRadius: borderRadius.xxl,
+    borderBottomRightRadius: borderRadius.xxl,
+  },
+  logoContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.md,
+  },
+  logo: { 
+    width: 120, 
+    height: 36,
+  },
+  headerTitle: {
+    ...typography.title,
+    color: '#fff',
+    marginBottom: spacing.xs,
+  },
+  headerSubtitle: {
+    ...typography.bodySmall,
+    color: 'rgba(255,255,255,0.9)',
+  },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.xl,
     padding: spacing.xl,
+    margin: spacing.lg,
+    marginTop: -spacing.xl,
     borderWidth: 1,
     borderColor: colors.border,
-    ...shadows.card,
+    ...shadows.cardLg,
   },
-  logo: { width: 160, height: 48, alignSelf: 'center', marginBottom: spacing.lg },
-  title: { ...typography.title, marginBottom: spacing.xs, color: colors.text },
-  hint: { ...typography.bodySmall, color: colors.textSecondary, marginBottom: spacing.lg },
-  input: {
-    borderWidth: 1,
+  title: { 
+    ...typography.titleSmall, 
+    marginBottom: spacing.xs, 
+    color: colors.text 
+  },
+  hint: { 
+    ...typography.bodySmall, 
+    color: colors.textSecondary, 
+    marginBottom: spacing.xl 
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1.5,
     borderColor: colors.border,
     borderRadius: borderRadius.md,
-    padding: spacing.md,
     marginBottom: spacing.md,
+    backgroundColor: colors.surfaceTint,
+    minHeight: minTouchTargetSize,
+  },
+  inputIcon: {
+    marginLeft: spacing.md,
+  },
+  input: {
+    flex: 1,
+    padding: spacing.md,
     fontSize: 16,
     color: colors.text,
-    minHeight: minTouchTargetSize,
   },
   button: {
     backgroundColor: colors.primary,
@@ -163,25 +266,71 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: minTouchTargetSize,
-    marginTop: spacing.sm,
+    marginTop: spacing.md,
     ...shadows.buttonPrimary,
   },
-  buttonText: { color: '#fff', ...typography.subtitle },
-  link: { marginTop: spacing.sm, alignItems: 'center' },
-  linkText: { color: colors.primary, ...typography.body },
-  socialRow: { marginTop: spacing.lg, alignItems: 'center' },
-  socialHint: { ...typography.caption, color: colors.textMuted },
-  socialButton: {
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  buttonText: { 
+    color: '#fff', 
+    ...typography.button 
+  },
+  link: { 
+    marginTop: spacing.md, 
+    alignItems: 'center' 
+  },
+  linkText: { 
+    color: colors.primary, 
+    ...typography.body,
+    fontWeight: '600',
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: spacing.lg,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.border,
+  },
+  dividerText: {
+    ...typography.caption,
+    color: colors.textMuted,
+    marginHorizontal: spacing.md,
+  },
+  registerRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     marginTop: spacing.lg,
+  },
+  registerText: {
+    ...typography.body,
+    color: colors.textSecondary,
+  },
+  registerLink: {
+    ...typography.body,
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  socialButton: {
     padding: spacing.md,
     borderRadius: borderRadius.md,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.border,
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: minTouchTargetSize,
+    flexDirection: 'row',
   },
   socialButtonDisabled: { opacity: 0.7 },
-  socialButtonText: { ...typography.body, color: colors.text },
+  socialButtonText: { 
+    ...typography.body, 
+    color: colors.text,
+    fontWeight: '600',
+  },
 });

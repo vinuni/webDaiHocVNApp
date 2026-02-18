@@ -4,7 +4,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAuth } from '../auth/AuthContext';
 import { View, ActivityIndicator, Text, Image, Platform } from 'react-native';
-import { colors, typography } from '../theme';
+import { Ionicons } from '@expo/vector-icons';
+import { colors, typography, iconSizes } from '../theme';
 
 const logo = require('../../assets/logo.png');
 
@@ -36,6 +37,7 @@ import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import SearchScreen from '../screens/SearchScreen';
 import StudyMaterialsScreen from '../screens/StudyMaterialsScreen';
 import CommentsScreen from '../screens/CommentsScreen';
+import CustomTabBar from '../components/CustomTabBar';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -62,14 +64,11 @@ function HoiAiStack() {
 function MainTabs() {
   return (
     <Tab.Navigator
+      tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={{
         ...headerOptions,
         headerShown: true,
         headerTitle: () => <HeaderLogo />,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
-        tabBarLabelStyle: { fontSize: 12, fontWeight: '500' },
       }}
     >
       <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Trang chủ', tabBarLabel: 'Trang chủ' }} />
@@ -109,6 +108,7 @@ export default function AppNavigator() {
     );
   }
 
+  // Guests see only AuthStack (Login/Register/ForgotPassword). All app features require auth.
   return (
     <NavigationContainer>
       {isAuthenticated ? <MainStack /> : <AuthStack />}
