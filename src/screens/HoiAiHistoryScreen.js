@@ -7,8 +7,13 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  Modal,
+  ScrollView,
+  Image,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { apiClient } from '../api/client';
+import MathText from '../components/MathText';
 import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize } from '../theme';
 
 const PER_PAGE = 20;
@@ -20,7 +25,9 @@ export default function HoiAiHistoryScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [expandedId, setExpandedId] = useState(null);
+  const [selectedId, setSelectedId] = useState(null);
+  const [detail, setDetail] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   const loadPage = useCallback(async (pageNum, append = false) => {
     try {
@@ -62,12 +69,29 @@ export default function HoiAiHistoryScreen({ navigation }) {
     }
   };
 
-  const renderItem = ({ item }) => {
-    const isExpanded = expandedId === item.id;
-    return (
+  const openDetail = useCallback(async (id) => {
+    setSelectedId(id);
+    setDetail(null);
+    setDetailLoading(true);
+    try {
+      const res = await apiClient.get(`/api/v1/ai-question/history/${id}`);
+      setDetail(res);
+    } catch {
+      setDetail(null);
+    } finally {
+      setDetailLoading(false);
+    }
+  }, []);
+
+  const closeDetail = useCallback(() => {
+    setSelectedId(null);
+    setDetail(null);
+  }, []);
+
+  const renderItem = ({ item }) => (
       <TouchableOpacity
         style={[styles.card, shadows.cardSm]}
-        onPress={() => setExpandedId(isExpanded ? null : item.id)}
+        onPress={() => openDetail(item.id)}
         activeOpacity={0.8}
       >
         <Text style={styles.date}>
@@ -75,12 +99,26 @@ export default function HoiAiHistoryScreen({ navigation }) {
             ? new Date(item.created_at).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })
             : '—'}
         </Text>
-        <Text style={styles.question} numberOfLines={isExpanded ? undefined : 2}>
+        <Text style={styles.question} numberOfLines={2}>
           {item.question_text || '—'}
         </Text>
-        <Text style={styles.response} numberOfLines={isExpanded ? undefined : 2}>
-          {item.response_text || '—'}
-        </Text>
+        {(() => {
+          if (!item.response_text) return <Text style={styles.response}>—</Text>;
+          try {
+            const htmlResponse = JSON.parse(item.response_text);
+            return (
+              <View style={styles.responseWrapper}>
+                <MathText value={htmlResponse} containerStyle={styles.mathResponse} />
+              </View>
+            );
+          } catch (e) {
+            return (
+              <Text style={styles.response} numberOfLines={2}>
+                {String(item.response_text)}
+              </Text>
+            );
+          }
+        })()}
         <View style={styles.meta}>
           {item.monthi_suggested ? (
             <View style={styles.chip}><Text style={styles.chipText}>{item.monthi_suggested}</Text></View>
@@ -97,7 +135,6 @@ export default function HoiAiHistoryScreen({ navigation }) {
         </View>
       </TouchableOpacity>
     );
-  };
 
   if (loading && items.length === 0) {
     return (
@@ -108,6 +145,7 @@ export default function HoiAiHistoryScreen({ navigation }) {
   }
 
   return (
+    <>
     <FlatList
       data={items}
       renderItem={renderItem}
@@ -129,6 +167,91 @@ export default function HoiAiHistoryScreen({ navigation }) {
         ) : null
       }
     />
+
+    <Modal
+      visible={selectedId != null}
+      transparent
+      animationType="fade"
+      onRequestClose={closeDetail}
+    >
+      <TouchableOpacity
+        style={styles.modalOverlay}
+        activeOpacity={1}
+        onPress={closeDetail}
+      >
+        <TouchableOpacity activeOpacity={1} onPress={(e) => e.stopPropagation()} style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Chi tiết hỏi đáp</Text>
+            <TouchableOpacity onPress={closeDetail} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+              <Ionicons name="close" size={24} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+          {detailLoading ? (
+            <View style={styles.detailLoading}>
+              <ActivityIndicator size="large" color={colors.primary} />
+            </View>
+          ) : detail ? (
+            <ScrollView
+              style={styles.detailScroll}
+              contentContainerStyle={styles.detailScrollContent}
+              showsVerticalScrollIndicator={true}
+            >
+              <Text style={styles.detailDate}>
+                {detail.created_at
+                  ? new Date(detail.created_at).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })
+                  : '—'}
+              </Text>
+              <Text style={styles.detailQuestion}>{detail.question_text || '—'}</Text>
+              {detail.photo_url ? (
+                <Image
+                  source={{
+                    uri: detail.photo_url.startsWith('http')
+                      ? detail.photo_url
+                      : `${apiClient.baseURL}${detail.photo_url.startsWith('/') ? '' : '/'}${detail.photo_url}`,
+                  }}
+                  style={styles.detailImage}
+                  resizeMode="contain"
+                />
+              ) : null}
+              <Text style={styles.answerLabel}>Câu trả lời</Text>
+              {detail.response_text ? (
+                (() => {
+                  try {
+                    const htmlResponse = JSON.parse(detail.response_text);
+                    return (
+                      <View style={styles.detailResponseWrapper}>
+                        <MathText value={htmlResponse} containerStyle={styles.mathResponse} />
+                      </View>
+                    );
+                  } catch (e) {
+                    return <Text style={styles.detailResponse}>{String(detail.response_text)}</Text>;
+                  }
+                })()
+              ) : (
+                <Text style={styles.detailResponse}>—</Text>
+              )}
+              <View style={styles.meta}>
+                {detail.monthi_suggested ? (
+                  <View style={styles.chip}><Text style={styles.chipText}>{detail.monthi_suggested}</Text></View>
+                ) : null}
+                {detail.hocphan_suggested ? (
+                  <View style={styles.chip}><Text style={styles.chipText}>{detail.hocphan_suggested}</Text></View>
+                ) : null}
+                {detail.difficulty_level ? (
+                  <View style={styles.chip}><Text style={styles.chipText}>{detail.difficulty_level}</Text></View>
+                ) : null}
+                {detail.usefulness_score != null ? (
+                  <View style={styles.chip}><Text style={styles.chipText}>{detail.usefulness_score}</Text></View>
+                ) : null}
+              </View>
+            </ScrollView>
+          ) : (
+            <Text style={styles.detailError}>Không thể tải chi tiết.</Text>
+          )}
+        </TouchableOpacity>
+      </TouchableOpacity>
+    </Modal>
+  </>
   );
 }
 
@@ -148,9 +271,52 @@ const styles = StyleSheet.create({
   date: { ...typography.caption, color: colors.textMuted, marginBottom: 4 },
   question: { ...typography.subtitle, color: colors.text, marginBottom: 4 },
   response: { ...typography.bodySmall, color: colors.textSecondary },
+  responseWrapper: { marginTop: 4 },
+  mathResponse: { backgroundColor: 'transparent' },
   meta: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginTop: spacing.sm },
   chip: { backgroundColor: colors.background, paddingHorizontal: spacing.sm, paddingVertical: 2, borderRadius: borderRadius.sm },
   chipText: { ...typography.caption, color: colors.textSecondary },
   empty: { ...typography.body, color: colors.textMuted, textAlign: 'center', marginTop: spacing.xl },
   footer: { padding: spacing.md, alignItems: 'center' },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.md,
+  },
+  modalContent: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    maxWidth: '100%',
+    maxHeight: '90%',
+    width: '100%',
+    overflow: 'hidden',
+    ...shadows.cardSm,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  modalTitle: { ...typography.subtitle, color: colors.text, fontWeight: '600' },
+  detailLoading: { padding: spacing.xl, alignItems: 'center' },
+  detailScroll: { maxHeight: 400 },
+  detailScrollContent: { padding: spacing.md, paddingBottom: spacing.xl },
+  detailDate: { ...typography.caption, color: colors.textMuted, marginBottom: 4 },
+  detailQuestion: { ...typography.subtitle, color: colors.text, marginBottom: spacing.sm },
+  detailImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.md,
+    backgroundColor: colors.background,
+  },
+  answerLabel: { ...typography.caption, color: colors.textMuted, marginBottom: 4, fontWeight: '600' },
+  detailResponseWrapper: { marginBottom: spacing.sm },
+  detailResponse: { ...typography.bodySmall, color: colors.textSecondary },
+  detailError: { ...typography.body, color: colors.danger, padding: spacing.md, textAlign: 'center' },
 });

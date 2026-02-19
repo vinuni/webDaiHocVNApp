@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { apiClient } from '../api/client';
-import { colors, spacing, borderRadius, typography, minTouchTargetSize } from '../theme';
+import { colors, spacing, borderRadius, typography, minTouchTargetSize, iconSizes } from '../theme';
 
-export default function ScoreboardScreen() {
+export default function ScoreboardScreen({ navigation }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -21,24 +22,38 @@ export default function ScoreboardScreen() {
 
   const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false); };
 
+  const onPressAttempt = (item) => {
+    if (item.de_thi_id == null) return;
+    navigation.navigate('Result', {
+      deThiId: item.de_thi_id,
+      tendethi: item.tendethi || 'Kết quả',
+      diem: item.diem,
+    });
+  };
+
   if (loading && !data.length) return (<View style={styles.centered}><ActivityIndicator size="large" color={colors.primary} /></View>);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Bang diem</Text>
+      <Text style={styles.title}>Bảng điểm</Text>
       <FlatList
         data={data}
         keyExtractor={(item, idx) => String(item.de_thi_id || idx)}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListEmptyComponent={<View style={styles.emptyWrap}><Text style={styles.empty}>Chưa có kết quả.</Text></View>}
         renderItem={({ item, index }) => (
-          <View style={styles.row}>
+          <TouchableOpacity
+            style={styles.row}
+            onPress={() => onPressAttempt(item)}
+            activeOpacity={0.7}
+          >
             <View style={styles.rankBadge}><Text style={styles.rank}>{index + 1}</Text></View>
             <View style={styles.rowContent}>
               <Text style={styles.rowTitle}>{item.tendethi || 'Đề thi'}</Text>
               <Text style={styles.rowMeta}>Điểm: {item.diem != null ? Number(item.diem).toFixed(1) : '–'}</Text>
             </View>
-          </View>
+            <Ionicons name="chevron-forward" size={iconSizes.sm} color={colors.textMuted} />
+          </TouchableOpacity>
         )}
       />
     </View>

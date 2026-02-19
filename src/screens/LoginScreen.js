@@ -81,7 +81,14 @@ export default function LoginScreen({ navigation }) {
     try {
       await login(email.trim(), password);
     } catch (e) {
-      const msg = e?.message || (e.status === 422 ? 'Email hoặc mật khẩu không đúng.' : 'Đăng nhập thất bại.');
+      const isNetworkError =
+        e?.message === 'Network request failed' ||
+        (typeof e?.message === 'string' && (e.message.includes('fetch') || e.message.includes('Failed to load')));
+      const msg = e?.status === 422
+        ? 'Email hoặc mật khẩu không đúng.'
+        : isNetworkError
+          ? 'Không kết nối được máy chủ. Kiểm tra EXPO_PUBLIC_API_BASE_URL trong .env và đảm bảo backend đang chạy (xem README / docs).'
+          : (e?.body?.message || e?.message) || 'Đăng nhập thất bại.';
       Alert.alert('Đăng nhập thất bại', msg);
     } finally {
       setLoading(false);
@@ -108,7 +115,10 @@ export default function LoginScreen({ navigation }) {
           <View style={styles.logoContainer}>
             <Image source={logo} style={styles.logo} resizeMode="contain" tintColor="#fff" />
           </View>
-          <Text style={styles.headerTitle}>Thi Thử Online</Text>
+          <View style={styles.headerTitleRow}>
+            <Ionicons name="document-text-outline" size={iconSizes.lg} color="#fff" style={styles.headerTitleIcon} />
+            <Text style={styles.headerTitle}>Thi Thử Online</Text>
+          </View>
           <Text style={styles.headerSubtitle}>Nền tảng luyện thi THPT Quốc Gia</Text>
         </LinearGradient>
 
@@ -211,10 +221,17 @@ const styles = StyleSheet.create({
     width: 120, 
     height: 36,
   },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  headerTitleIcon: {
+    marginRight: spacing.sm,
+  },
   headerTitle: {
     ...typography.title,
     color: '#fff',
-    marginBottom: spacing.xs,
   },
   headerSubtitle: {
     ...typography.bodySmall,

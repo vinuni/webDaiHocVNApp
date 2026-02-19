@@ -13,6 +13,8 @@ export default function ResultScreen({ route, navigation }) {
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [expandedQuestions, setExpandedQuestions] = useState({});
+  const [fontSizeLevel, setFontSizeLevel] = useState(1);
+  const contentFontSize = 18 + fontSizeLevel * 2;
 
   useEffect(() => {
     let m = true;
@@ -40,7 +42,7 @@ export default function ResultScreen({ route, navigation }) {
   return (
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header */}
+        {/* Compact header */}
         <LinearGradient
           colors={isPassed ? gradients.success : gradients.warm}
           start={{ x: 0, y: 0 }}
@@ -48,10 +50,10 @@ export default function ResultScreen({ route, navigation }) {
           style={styles.header}
         >
           <View style={styles.resultIcon}>
-            <Ionicons 
-              name={isPassed ? "checkmark-circle" : "close-circle"} 
-              size={iconSizes.xxl} 
-              color="#fff" 
+            <Ionicons
+              name={isPassed ? "checkmark-circle" : "close-circle"}
+              size={iconSizes.xl}
+              color="#fff"
             />
           </View>
           <Text style={styles.headerTitle}>
@@ -112,7 +114,28 @@ export default function ResultScreen({ route, navigation }) {
         {/* Question Results */}
         {!loading && bailams.length > 0 && (
           <View style={styles.questionsSection}>
-            <Text style={styles.sectionTitle}>Chi tiết từng câu</Text>
+            <View style={styles.sectionTitleRow}>
+              <Text style={styles.sectionTitle}>Chi tiết từng câu</Text>
+              <View style={styles.fontSizeControls}>
+                <TouchableOpacity
+                  style={[styles.fontSizeBtn, fontSizeLevel <= 0 && styles.fontSizeBtnDisabled]}
+                  onPress={() => setFontSizeLevel((l) => (l <= 0 ? 0 : l - 1))}
+                  disabled={fontSizeLevel <= 0}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="remove" size={iconSizes.md} color={fontSizeLevel <= 0 ? colors.textMuted : colors.primary} />
+                </TouchableOpacity>
+                <Text style={styles.fontSizeLabel}>A</Text>
+                <TouchableOpacity
+                  style={[styles.fontSizeBtn, fontSizeLevel >= 3 && styles.fontSizeBtnDisabled]}
+                  onPress={() => setFontSizeLevel((l) => (l >= 3 ? 3 : l + 1))}
+                  disabled={fontSizeLevel >= 3}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="add" size={iconSizes.md} color={fontSizeLevel >= 3 ? colors.textMuted : colors.primary} />
+                </TouchableOpacity>
+              </View>
+            </View>
             {bailams.map((b, idx) => {
               const isCorrect = b.dung === true;
               const isExpanded = expandedQuestions[b.question_id];
@@ -180,7 +203,7 @@ export default function ResultScreen({ route, navigation }) {
                       )}
                       {b.cauhoi && (
                         <View style={styles.questionTextWrap}>
-                          <MathText value={b.cauhoi} />
+                          <MathText value={b.cauhoi} contentFontSize={contentFontSize} />
                         </View>
                       )}
                       <View style={styles.optionsWrap}>
@@ -189,7 +212,6 @@ export default function ResultScreen({ route, navigation }) {
                           if (!opt) return null;
                           const isUserChoice = b.traloi === c;
                           const isCorrectChoice = b.dapan_dung === c;
-                          
                           return (
                             <View
                               key={c}
@@ -212,7 +234,7 @@ export default function ResultScreen({ route, navigation }) {
                                 </Text>
                               </View>
                               <View style={styles.optionResultContent}>
-                                <MathText value={opt} />
+                                <MathText value={opt} contentFontSize={contentFontSize} />
                               </View>
                               {isCorrectChoice && (
                                 <Ionicons name="checkmark-circle" size={16} color={colors.success} />
@@ -256,35 +278,36 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    paddingTop: spacing.xxl + 40,
-    paddingBottom: spacing.xl,
-    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.sm,
+    paddingHorizontal: spacing.md,
     alignItems: 'center',
     borderBottomLeftRadius: borderRadius.xxl,
     borderBottomRightRadius: borderRadius.xxl,
   },
   resultIcon: {
-    marginBottom: spacing.md,
-  },
-  headerTitle: {
-    ...typography.title,
-    color: '#fff',
     marginBottom: spacing.xs,
   },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 2,
+  },
   headerSubtitle: {
-    ...typography.bodySmall,
+    fontSize: 13,
     color: 'rgba(255,255,255,0.95)',
     textAlign: 'center',
   },
-  scoreCard: { 
-    backgroundColor: colors.surface, 
-    borderRadius: borderRadius.xl, 
-    padding: spacing.xl, 
-    alignItems: 'center', 
-    marginHorizontal: spacing.lg,
-    marginTop: -spacing.lg,
-    marginBottom: spacing.lg,
-    borderWidth: 1, 
+  scoreCard: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    alignItems: 'center',
+    marginHorizontal: spacing.sm,
+    marginTop: -spacing.md,
+    marginBottom: spacing.md,
+    borderWidth: 1,
     borderColor: colors.border,
     ...shadows.cardLg,
   },
@@ -333,15 +356,39 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   questionsSection: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.sm,
+    paddingTop: 2,
     paddingBottom: spacing.lg,
+  },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.md,
+    gap: spacing.sm,
   },
   sectionTitle: {
     ...typography.subtitle,
     color: colors.text,
     fontWeight: '700',
-    marginBottom: spacing.md,
   },
+  fontSizeControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  fontSizeBtn: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.backgroundDark,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  fontSizeBtnDisabled: { opacity: 0.5 },
+  fontSizeLabel: { fontSize: 12, color: colors.textMuted, marginHorizontal: 2 },
   questionResult: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.sm,
@@ -398,11 +445,11 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   questionResultContent: {
-    paddingHorizontal: spacing.sm,
-    paddingBottom: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
     borderTopWidth: 1,
     borderTopColor: colors.border,
-    paddingTop: spacing.sm,
+    paddingTop: spacing.md,
   },
   questionImage: {
     width: '100%',
@@ -412,7 +459,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundDark,
   },
   questionTextWrap: {
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
   },
   optionsWrap: {
     gap: 4,
@@ -451,7 +498,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.danger,
   },
   optionResultLetter: {
-    fontSize: 11,
+    fontSize: 13,
     color: colors.textMuted,
     fontWeight: '700',
   },

@@ -109,7 +109,7 @@ export default function HomeScreen({ navigation }) {
           <View style={styles.headerActions}>
             <TouchableOpacity 
               style={styles.headerButton} 
-              onPress={() => navigation.getParent()?.navigate('HoiAi')} 
+              onPress={() => navigation.navigate('HoiAi')} 
               activeOpacity={0.8}
             >
               <Ionicons name="sparkles" size={iconSizes.md} color="#fff" />
@@ -127,12 +127,12 @@ export default function HomeScreen({ navigation }) {
 
       <ScrollView 
         style={styles.content}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} />}
+        refreshControl={<RefreshControl refreshing={Boolean(refreshing)} onRefresh={onRefresh} colors={[colors.primary]} />}
       >
         {/* Introduction Section */}
         <View style={styles.introCard}>
           <View style={styles.introHeader}>
-            <Ionicons name="information-circle" size={iconSizes.lg} color={colors.primary} />
+            <Ionicons name="information-circle" size={iconSizes.md} color={colors.primary} />
             <Text style={styles.introTitle}>Giới Thiệu</Text>
           </View>
           <Text style={styles.introText}>
@@ -156,9 +156,9 @@ export default function HomeScreen({ navigation }) {
               </View>
             </View>
             <View style={styles.studyMaterialsGrid}>
-              {studyMaterialsSummary.map((sm) => (
+              {studyMaterialsSummary.map((sm, idx) => (
                 <TouchableOpacity
-                  key={sm.mon_thi_id}
+                  key={`sm-${sm.mon_thi_id}-${idx}`}
                   style={[styles.studyMaterialCard, { borderLeftColor: getSubjectColor(sm.tenmonthi) }]}
                   onPress={() => navigation.navigate('Topics', { screen: 'TopicsList', params: { monThiId: sm.mon_thi_id } })}
                   activeOpacity={0.8}
@@ -222,7 +222,7 @@ export default function HomeScreen({ navigation }) {
             horizontal
             contentContainerStyle={styles.monList}
             showsHorizontalScrollIndicator={false}
-            scrollEnabled={mon_this.length > 0}
+            scrollEnabled={Boolean(mon_this && mon_this.length > 0)}
           >
             {mon_this.map((item) => (
               <TouchableOpacity
@@ -257,20 +257,38 @@ export default function HomeScreen({ navigation }) {
             </Text>
           </View>
         ) : (
-          de_this.map((item) => {
+          de_this.map((item, index) => {
             const examColor = item.is_full ? colors.success : colors.primary;
+            const attempted = item.user_attempted === true;
+            const onPress = () => {
+              if (attempted) {
+                navigation.navigate('Result', {
+                  deThiId: item.id,
+                  tendethi: item.tendethi,
+                  diem: item.user_diem,
+                });
+              } else {
+                navigation.navigate('ExamTake', { deThiId: item.id, tendethi: item.tendethi });
+              }
+            };
             return (
               <TouchableOpacity
-                key={item.id}
+                key={`de-thi-${item.id}-${index}`}
                 style={styles.examCard}
-                onPress={() => navigation.navigate('ExamTake', { deThiId: item.id, tendethi: item.tendethi })}
+                onPress={onPress}
                 activeOpacity={0.7}
               >
                 <View style={[styles.examAccent, { backgroundColor: examColor }]} />
                 <View style={styles.examContent}>
                   <View style={styles.examTitleRow}>
                     <Text style={styles.examTitle} numberOfLines={2}>{item.tendethi}</Text>
-                    {item.is_new && (
+                    {attempted && (
+                      <View style={styles.attemptedBadge}>
+                        <Ionicons name="checkmark-circle" size={10} color={colors.success} />
+                        <Text style={styles.attemptedBadgeText}>Đã làm</Text>
+                      </View>
+                    )}
+                    {item.is_new && !attempted && (
                       <View style={styles.newBadge}>
                         <Ionicons name="flash" size={10} color={colors.warning} />
                         <Text style={styles.newBadgeText}>MỚI</Text>
@@ -320,8 +338,8 @@ const styles = StyleSheet.create({
   },
   headerBanner: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xl,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
     borderBottomLeftRadius: borderRadius.xl,
     borderBottomRightRadius: borderRadius.xl,
   },
@@ -359,29 +377,30 @@ const styles = StyleSheet.create({
   },
   introCard: {
     backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-    marginBottom: spacing.lg,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
-    ...shadows.card,
+    ...shadows.cardSm,
   },
   introHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.md,
-    gap: spacing.sm,
+    marginBottom: spacing.sm,
+    gap: spacing.xs,
   },
   introTitle: {
-    ...typography.subtitle,
+    ...typography.body,
+    fontSize: 15,
     color: colors.text,
     fontWeight: '700',
   },
   introText: {
-    ...typography.body,
+    ...typography.bodySmall,
     color: colors.textSecondary,
-    lineHeight: 24,
-    marginBottom: spacing.md,
+    lineHeight: 20,
+    marginBottom: spacing.sm,
     textAlign: 'justify',
   },
   introBrand: {
@@ -617,6 +636,21 @@ const styles = StyleSheet.create({
   newBadgeText: {
     ...typography.captionSmall,
     color: colors.warning,
+    fontWeight: '700',
+    fontSize: 9,
+  },
+  attemptedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.successTint,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: borderRadius.xs,
+    gap: 2,
+  },
+  attemptedBadgeText: {
+    ...typography.captionSmall,
+    color: colors.success,
     fontWeight: '700',
     fontSize: 9,
   },

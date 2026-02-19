@@ -18,6 +18,9 @@ export default function ExamTakeScreen({ route, navigation }) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [minutesLeft, setMinutesLeft] = useState(0);
   const [timerReady, setTimerReady] = useState(false);
+  // Font size for question/options: 0 = 18, 1 = 20, 2 = 22, 3 = 24
+  const [fontSizeLevel, setFontSizeLevel] = useState(1);
+  const questionFontSize = 18 + fontSizeLevel * 2;
 
   useEffect(() => {
     let mounted = true;
@@ -80,20 +83,20 @@ export default function ExamTakeScreen({ route, navigation }) {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-      {/* Progress Header */}
+      {/* Compact progress header */}
       <LinearGradient
         colors={gradients.primary}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.header}
       >
-        <View style={styles.headerTop}>
+        <View style={styles.headerRow}>
           <View style={styles.headerLeft}>
             <Text style={styles.questionProgress}>{answeredCount}/{questions.length}</Text>
             <Text style={styles.progressLabel}>câu</Text>
           </View>
           <View style={styles.timerBadge}>
-            <Ionicons name="time" size={iconSizes.sm} color="#fff" />
+            <Ionicons name="time" size={iconSizes.xs} color="#fff" />
             <Text style={styles.timer}>{minutesLeft}′</Text>
           </View>
         </View>
@@ -105,11 +108,32 @@ export default function ExamTakeScreen({ route, navigation }) {
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.questionBlock}>
-          <View style={styles.questionHeader}>
-            <View style={[styles.questionNumber, answers[currentQuestion.id] != null && styles.questionNumberAnswered]}>
-              <Text style={styles.questionNumberText}>{currentQuestionIndex + 1}</Text>
+          <View style={styles.questionTopRow}>
+            <View style={styles.questionHeader}>
+              <View style={[styles.questionNumber, answers[currentQuestion.id] != null && styles.questionNumberAnswered]}>
+                <Text style={styles.questionNumberText}>{currentQuestionIndex + 1}</Text>
+              </View>
+              <Text style={styles.qLabel}>Câu {currentQuestionIndex + 1}</Text>
             </View>
-            <Text style={styles.qLabel}>Câu {currentQuestionIndex + 1}</Text>
+            <View style={styles.fontSizeControls}>
+              <TouchableOpacity
+                style={[styles.fontSizeBtn, fontSizeLevel <= 0 && styles.fontSizeBtnDisabled]}
+                onPress={() => setFontSizeLevel((l) => (l <= 0 ? 0 : l - 1))}
+                disabled={fontSizeLevel <= 0}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="remove" size={iconSizes.md} color={fontSizeLevel <= 0 ? colors.textMuted : colors.primary} />
+              </TouchableOpacity>
+              <Text style={styles.fontSizeLabel}>A</Text>
+              <TouchableOpacity
+                style={[styles.fontSizeBtn, fontSizeLevel >= 3 && styles.fontSizeBtnDisabled]}
+                onPress={() => setFontSizeLevel((l) => (l >= 3 ? 3 : l + 1))}
+                disabled={fontSizeLevel >= 3}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="add" size={iconSizes.md} color={fontSizeLevel >= 3 ? colors.textMuted : colors.primary} />
+              </TouchableOpacity>
+            </View>
           </View>
           {currentQuestion.image && (
             <Image
@@ -118,7 +142,7 @@ export default function ExamTakeScreen({ route, navigation }) {
               resizeMode="contain"
             />
           )}
-          <MathText value={currentQuestion.cauhoi} containerStyle={styles.mathQuestion} />
+          <MathText value={currentQuestion.cauhoi} containerStyle={styles.mathQuestion} contentFontSize={questionFontSize} />
           <View style={styles.optionsWrap}>
             {choices.map((c) => {
               const opt = currentQuestion['dapan' + c];
@@ -135,7 +159,7 @@ export default function ExamTakeScreen({ route, navigation }) {
                     <Text style={[styles.optionLetter, selected && styles.optionLetterSelected]}>{c}</Text>
                   </View>
                   <View style={styles.optionContent}>
-                    <MathText value={opt} containerStyle={selected ? styles.optionMathSelected : undefined} />
+                    <MathText value={opt} containerStyle={selected ? styles.optionMathSelected : undefined} contentFontSize={questionFontSize} />
                   </View>
                   {selected && (
                     <View style={styles.checkIconWrap}>
@@ -228,17 +252,17 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
   emptyText: { ...typography.body, color: colors.textSecondary },
   header: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingTop: 6,
+    paddingBottom: 6,
     borderBottomLeftRadius: borderRadius.xl,
     borderBottomRightRadius: borderRadius.xl,
   },
-  headerTop: {
+  headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: 2,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -246,30 +270,30 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   questionProgress: {
-    ...typography.title,
-    color: '#fff',
+    fontSize: 18,
     fontWeight: '700',
+    color: '#fff',
   },
   progressLabel: {
-    ...typography.caption,
+    fontSize: 12,
     color: 'rgba(255,255,255,0.9)',
   },
-  timerBadge: { 
+  timerBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.2)', 
-    paddingHorizontal: spacing.md, 
-    paddingVertical: spacing.xs, 
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
     borderRadius: borderRadius.full,
     gap: 4,
   },
-  timer: { ...typography.body, color: '#fff', fontWeight: '700' },
+  timer: { fontSize: 14, color: '#fff', fontWeight: '700' },
   progressBarWrap: {
-    height: 6,
+    height: 4,
     backgroundColor: 'rgba(255,255,255,0.3)',
     borderRadius: borderRadius.full,
     overflow: 'hidden',
-    marginBottom: spacing.sm,
+    marginBottom: 2,
   },
   progressBarFill: {
     height: '100%',
@@ -277,24 +301,34 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.full,
   },
   examTitle: {
-    ...typography.bodySmall,
+    fontSize: 12,
     color: 'rgba(255,255,255,0.95)',
   },
   scroll: { flex: 1 },
-  scrollContent: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  scrollContent: {
+    paddingHorizontal: spacing.sm,
+    paddingTop: 2,
+    paddingBottom: spacing.xxl,
+  },
   questionBlock: {
     marginBottom: spacing.lg,
     backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
-    padding: spacing.md,
+    padding: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
     ...shadows.card,
   },
+  questionTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.md,
+    gap: spacing.sm,
+  },
   questionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.sm,
     gap: spacing.xs,
   },
   questionNumber: {
@@ -313,7 +347,24 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '700',
   },
-  qLabel: { ...typography.bodySmall, color: colors.primary, fontWeight: '700' },
+  qLabel: { fontSize: 15, color: colors.primary, fontWeight: '700' },
+  fontSizeControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  fontSizeBtn: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.backgroundDark,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  fontSizeBtnDisabled: { opacity: 0.5 },
+  fontSizeLabel: { fontSize: 12, color: colors.textMuted, marginHorizontal: 2 },
   questionImage: {
     width: '100%',
     height: 200,
@@ -321,7 +372,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.sm,
     backgroundColor: colors.backgroundDark,
   },
-  mathQuestion: { marginBottom: spacing.sm },
+  mathQuestion: { marginBottom: spacing.md },
   optionsWrap: {
     gap: 2,
   },
@@ -353,9 +404,9 @@ const styles = StyleSheet.create({
   optionBadgeSelected: {
     backgroundColor: colors.primary,
   },
-  optionLetter: { 
-    fontSize: 11,
-    color: colors.textMuted, 
+  optionLetter: {
+    fontSize: 13,
+    color: colors.textMuted,
     fontWeight: '700',
   },
   optionLetterSelected: { 

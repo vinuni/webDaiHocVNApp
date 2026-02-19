@@ -97,7 +97,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
             >
               <Ionicons
                 name={getIconName(route.name, isFocused)}
-                size={iconSizes.lg}
+                size={iconSizes.md}
                 color={isFocused ? colors.primary : colors.textMuted}
               />
             </Animated.View>
@@ -122,10 +122,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderTopWidth: 1,
     borderTopColor: colors.border,
-    paddingTop: spacing.sm,
-    paddingBottom: Platform.OS === 'ios' ? spacing.lg : spacing.sm,
+    paddingTop: 4,
+    paddingBottom: Platform.OS === 'ios' ? spacing.sm : 4,
     paddingHorizontal: spacing.xs,
-    height: Platform.OS === 'ios' ? 88 : 64,
+    height: Platform.OS === 'ios' ? 56 : 52,
   },
   tab: {
     flex: 1,
@@ -133,17 +133,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tabContent: {
-    width: 48,
-    height: 32,
+    width: 36,
+    height: 26,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: borderRadius.full,
     marginBottom: 2,
   },
   label: {
-    ...typography.caption,
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '600',
-    marginTop: 2,
+    marginTop: 1,
   },
 });

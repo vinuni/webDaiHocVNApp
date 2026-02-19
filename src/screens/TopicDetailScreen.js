@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { apiClient } from '../api/client';
-import { colors, spacing, typography, iconSizes } from '../theme';
+import { colors, spacing, borderRadius, typography, iconSizes } from '../theme';
 
 const PER_PAGE = 10;
 
@@ -48,9 +48,9 @@ export default function TopicDetailScreen({ route, navigation }) {
     setLoadingMore(true);
     try {
       const nextPage = deThisNhanhPage + 1;
-      const res = await apiClient.get(`/api/v1/hoc-phan/${id}/de-thi-nhanh`, {
-        params: { page: nextPage, per_page: PER_PAGE },
-      });
+      const res = await apiClient.get(
+        `/api/v1/hoc-phan/${id}/de-thi-nhanh?page=${nextPage}&per_page=${PER_PAGE}`
+      );
       setDeThisNhanh((prev) => [...prev, ...(res.data || [])]);
       setDeThisNhanhPage(nextPage);
       setHasMoreNhanh(res.has_more === true);
@@ -105,39 +105,59 @@ export default function TopicDetailScreen({ route, navigation }) {
           <Text style={styles.emptyList}>Chưa có đề thi nhanh.</Text>
         ) : (
           <>
-            {deThisNhanh.map((item) => (
-              <TouchableOpacity
-                key={item.id}
-                style={styles.examRow}
-                onPress={() =>
+            {deThisNhanh.map((item, index) => {
+              const attempted = item.user_attempted === true;
+              const onPress = () => {
+                if (attempted) {
+                  navigation.navigate('Result', {
+                    deThiId: item.id,
+                    tendethi: item.tendethi,
+                    diem: item.user_diem,
+                  });
+                } else {
                   navigation.navigate('ExamTake', {
                     deThiId: item.id,
                     tendethi: item.tendethi,
-                  })
+                  });
                 }
-                activeOpacity={0.7}
-              >
-                <View style={styles.examAccent} />
-                <View style={styles.examContent}>
-                  <Text style={styles.examTitle} numberOfLines={2}>
-                    {item.tendethi}
-                  </Text>
-                  <View style={styles.examMeta}>
-                    <View style={styles.metaItem}>
-                      <Ionicons name="time-outline" size={iconSizes.sm} color={colors.primary} />
-                      <Text style={styles.metaText}>{item.thoigian} phút</Text>
+              };
+              return (
+                <TouchableOpacity
+                  key={`de-thi-nhanh-${item.id}-${index}`}
+                  style={styles.examRow}
+                  onPress={onPress}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.examAccent} />
+                  <View style={styles.examContent}>
+                    <View style={styles.examTitleRow}>
+                      <Text style={styles.examTitle} numberOfLines={2}>
+                        {item.tendethi}
+                      </Text>
+                      {attempted && (
+                        <View style={styles.attemptedBadge}>
+                          <Ionicons name="checkmark-circle" size={10} color={colors.success} />
+                          <Text style={styles.attemptedBadgeText}>Đã làm</Text>
+                        </View>
+                      )}
                     </View>
-                    {item.cau_hois_count != null && (
+                    <View style={styles.examMeta}>
                       <View style={styles.metaItem}>
-                        <Ionicons name="document-outline" size={iconSizes.sm} color={colors.secondary} />
-                        <Text style={styles.metaText}>{item.cau_hois_count} câu</Text>
+                        <Ionicons name="time-outline" size={iconSizes.sm} color={colors.primary} />
+                        <Text style={styles.metaText}>{item.thoigian} phút</Text>
                       </View>
-                    )}
+                      {item.cau_hois_count != null && (
+                        <View style={styles.metaItem}>
+                          <Ionicons name="document-outline" size={iconSizes.sm} color={colors.secondary} />
+                          <Text style={styles.metaText}>{item.cau_hois_count} câu</Text>
+                        </View>
+                      )}
+                    </View>
                   </View>
-                </View>
-                <Ionicons name="chevron-forward" size={iconSizes.sm} color={colors.textMuted} />
-              </TouchableOpacity>
-            ))}
+                  <Ionicons name="chevron-forward" size={iconSizes.sm} color={colors.textMuted} />
+                </TouchableOpacity>
+              );
+            })}
             {hasMoreNhanh && (
               <TouchableOpacity
                 style={styles.loadMoreBtn}
@@ -191,7 +211,22 @@ const styles = StyleSheet.create({
   examRow: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.sm, paddingVertical: spacing.sm, paddingLeft: spacing.sm, backgroundColor: colors.backgroundDark, borderRadius: 8, borderLeftWidth: 4, borderLeftColor: colors.primary },
   examAccent: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, backgroundColor: 'transparent' },
   examContent: { flex: 1, marginLeft: spacing.xs },
-  examTitle: { ...typography.body, color: colors.text, fontWeight: '600' },
+  examTitleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, flexWrap: 'wrap' },
+  examTitle: { ...typography.body, color: colors.text, fontWeight: '600', flex: 1 },
+  attemptedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.successTint,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: borderRadius.xs,
+    gap: 2,
+  },
+  attemptedBadgeText: {
+    fontSize: 9,
+    color: colors.success,
+    fontWeight: '700',
+  },
   examMeta: { flexDirection: 'row', marginTop: 4, gap: spacing.sm },
   metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   metaText: { ...typography.bodySmall, color: colors.textSecondary },

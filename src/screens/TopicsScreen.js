@@ -80,7 +80,7 @@ export default function TopicsScreen({ navigation }) {
                 style={styles.chipIcon}
               />
               <Text style={[styles.chipText, isSelected && { color: '#fff' }]}>
-                {item.tenmonthi}
+                {item.short_name || item.tenmonthi}
               </Text>
             </TouchableOpacity>
           );

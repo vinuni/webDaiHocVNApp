@@ -10,6 +10,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { apiClient } from '../api/client';
+import MathText from '../components/MathText';
 import { colors, spacing, borderRadius, typography, shadows } from '../theme';
 
 export default function StudyMaterialsScreen({ route }) {
@@ -80,7 +81,14 @@ export default function StudyMaterialsScreen({ route }) {
         <Text style={styles.topicName}>{hocPhan.tenhocphan || 'Tài liệu'}</Text>
       </View>
       {materials.length === 0 ? (
-        <Text style={styles.emptyList}>Chưa có tài liệu cho học phần này.</Text>
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyList}>
+            {data?.message || 'Chưa có tài liệu cho học phần này.'}
+          </Text>
+          <Text style={styles.emptyHint}>
+            Tài liệu học tập sẽ được tạo tự động khi có đủ câu hỏi trong học phần này.
+          </Text>
+        </View>
       ) : (
         materials.map((m) => (
           <View key={m.id} style={[styles.card, shadows.cardSm]}>
@@ -97,9 +105,25 @@ export default function StudyMaterialsScreen({ route }) {
                 <Text style={styles.linkBtnText}>Mở link</Text>
               </TouchableOpacity>
             ) : null}
-            {m.content && !m.url && (
-              <Text style={styles.body} numberOfLines={10}>{m.content.replace(/<[^>]*>/g, '')}</Text>
-            )}
+            {m.content && !m.url && (() => {
+              try {
+                // Backend returns content as JSON-encoded string (like AI answers)
+                // API client already parsed outer JSON, but content field is still JSON string
+                const htmlContent = JSON.parse(m.content);
+                return (
+                  <View style={styles.contentWrapper}>
+                    <MathText value={htmlContent} containerStyle={styles.mathContent} />
+                  </View>
+                );
+              } catch (e) {
+                // Fallback: show as plain text if JSON parse fails
+                return (
+                  <Text style={styles.body} numberOfLines={10}>
+                    {typeof m.content === 'string' ? m.content.replace(/<[^>]*>/g, '') : String(m.content)}
+                  </Text>
+                );
+              }
+            })()}
           </View>
         ))
       )}
@@ -114,7 +138,9 @@ const styles = StyleSheet.create({
   emptyState: { flex: 1, justifyContent: 'center', padding: spacing.lg },
   emptyTitle: { ...typography.titleSmall, color: colors.text, marginBottom: spacing.sm },
   emptyText: { ...typography.body, color: colors.textSecondary },
-  emptyList: { ...typography.body, color: colors.textMuted, textAlign: 'center', marginTop: spacing.lg },
+  emptyState: { marginTop: spacing.lg, padding: spacing.md, alignItems: 'center' },
+  emptyList: { ...typography.body, color: colors.text, textAlign: 'center', marginBottom: spacing.sm },
+  emptyHint: { ...typography.bodySmall, color: colors.textMuted, textAlign: 'center', lineHeight: 20 },
   header: { marginBottom: spacing.md },
   topicName: { ...typography.titleSmall, color: colors.text },
   card: {
@@ -136,4 +162,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
   },
   linkBtnText: { ...typography.body, color: colors.primary },
+  contentWrapper: { marginTop: spacing.sm },
+  mathContent: { backgroundColor: colors.backgroundDark, borderRadius: borderRadius.sm, padding: spacing.sm },
 });

@@ -104,7 +104,9 @@ function getMathJaxLoader(heightCb, baseOrigin) {
 `;
 }
 
-const MATHJAX_HTML = (bodyContent) => `
+const DEFAULT_CONTENT_FONT_SIZE = 15;
+
+const MATHJAX_HTML = (bodyContent, fontSize = DEFAULT_CONTENT_FONT_SIZE) => `
 <!DOCTYPE html>
 <html>
 <head>
@@ -112,7 +114,7 @@ const MATHJAX_HTML = (bodyContent) => `
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <script>${MATHJAX_CONFIG}</script>
   <style>
-    body { margin: 0; padding: 8px; font-size: 15px; color: #1E293B; line-height: 1.5; -webkit-text-size-adjust: 100%; }
+    body { margin: 0; padding: 8px; font-size: ${Number(fontSize) || DEFAULT_CONTENT_FONT_SIZE}px; color: #1E293B; line-height: 1.5; -webkit-text-size-adjust: 100%; }
     #content { margin: 0; word-wrap: break-word; }
     mjx-container { overflow-x: auto; overflow-y: hidden; }
   </style>
@@ -124,15 +126,16 @@ const MATHJAX_HTML = (bodyContent) => `
 </html>
 `;
 
-export default function MathText({ value, style, containerStyle }) {
+export default function MathText({ value, style, containerStyle, contentFontSize }) {
   const [height, setHeight] = useState(60);
   const webRef = useRef(null);
+  const fontSize = contentFontSize != null ? Number(contentFontSize) : DEFAULT_CONTENT_FONT_SIZE;
 
   const content = wrapContent(value);
-  const html = MATHJAX_HTML(content);
+  const html = MATHJAX_HTML(content, fontSize);
 
   if (Platform.OS === 'web') {
-    return <MathTextWeb value={value} style={style} containerStyle={containerStyle} />;
+    return <MathTextWeb value={value} style={style} containerStyle={containerStyle} contentFontSize={contentFontSize} />;
   }
 
   return (
@@ -142,8 +145,8 @@ export default function MathText({ value, style, containerStyle }) {
         source={{ html }}
         originWhitelist={['*', 'https://*', 'http://*']}
         scrollEnabled={false}
-        javaScriptEnabled
-        domStorageEnabled
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
         style={[styles.webView, { minHeight: height }]}
         onMessage={(e) => {
           const h = parseInt(e.nativeEvent.data, 10);
@@ -163,9 +166,10 @@ export default function MathText({ value, style, containerStyle }) {
   );
 }
 
-function MathTextWeb({ value, style, containerStyle }) {
+function MathTextWeb({ value, style, containerStyle, contentFontSize }) {
   const content = value || '';
   const [height, setHeight] = useState(80);
+  const fontSize = contentFontSize != null ? Number(contentFontSize) : DEFAULT_CONTENT_FONT_SIZE;
 
   const html = React.useMemo(() => {
     const bodyContent = wrapContent(content);
@@ -173,10 +177,10 @@ function MathTextWeb({ value, style, containerStyle }) {
     const origin = typeof window !== 'undefined' && window.location && window.location.origin ? window.location.origin : '';
     return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <script>${MATHJAX_CONFIG}</script>
-<style>body{margin:0;padding:8px;font-size:15px;color:#1E293B;line-height:1.5}#content{margin:0}</style></head>
+<style>body{margin:0;padding:8px;font-size:${fontSize}px;color:#1E293B;line-height:1.5}#content{margin:0}</style></head>
 <body><div id="content">${bodyContent}</div>
 <script>${getMathJaxLoader(heightCb, origin)}</script></body></html>`;
-  }, [content]);
+  }, [content, fontSize]);
 
   useEffect(() => {
     const handler = (e) => {

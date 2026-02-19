@@ -11,8 +11,9 @@ import {
   Platform,
   Image,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../auth/AuthContext';
-import { colors, spacing, borderRadius, typography, minTouchTargetSize } from '../theme';
+import { colors, spacing, borderRadius, typography, minTouchTargetSize, iconSizes } from '../theme';
 
 const logo = require('../../assets/logo.png');
 
@@ -51,6 +52,10 @@ export default function RegisterScreen({ navigation }) {
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.card}>
+        <View style={styles.brandRow}>
+          <Ionicons name="document-text-outline" size={iconSizes.xl} color={colors.primary} style={styles.brandIcon} />
+          <Text style={styles.brandTitle}>Thi Thử Online</Text>
+        </View>
         <Image source={logo} style={styles.logo} resizeMode="contain" />
         <Text style={styles.title}>Đăng ký</Text>
         <Text style={styles.hint}>Tạo tài khoản để lưu tiến độ</Text>
@@ -97,6 +102,9 @@ export default function RegisterScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#F8FAFC' },
   card: { backgroundColor: '#fff', borderRadius: 16, padding: 24, marginHorizontal: 16, borderWidth: 1, borderColor: '#E2E8F0' },
+  brandRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  brandIcon: { marginRight: 8 },
+  brandTitle: { fontSize: 18, fontWeight: '700', color: colors.primary },
   logo: { width: 160, height: 48, alignSelf: 'center', marginBottom: 16 },
   title: { fontSize: 24, fontWeight: '700', marginBottom: 4, color: '#1E293B' },
   hint: { fontSize: 13, color: '#64748B', marginBottom: 16 },

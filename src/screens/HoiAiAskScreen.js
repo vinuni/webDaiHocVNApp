@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { apiClient } from '../api/client';
+import MathText from '../components/MathText';
 import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize, iconSizes } from '../theme';
 
 let ImagePicker = null;
@@ -28,9 +29,33 @@ export default function HoiAiAskScreen({ navigation }) {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
 
-  const pickImage = async () => {
+  const imagePickerOptions = {
+    mediaTypes: ['images'],
+    allowsEditing: true,
+    aspect: [4, 3],
+    quality: 0.8,
+  };
+
+  const takePhoto = async () => {
     if (!ImagePicker) {
-      Alert.alert('Thông báo', 'Tính năng đính kèm ảnh cần cài đặt expo-image-picker.');
+      Alert.alert('Thông báo', 'Tính năng ảnh cần cài đặt expo-image-picker.');
+      return;
+    }
+    const { status } = await (ImagePicker.requestCameraPermissionsAsync?.() ?? Promise.resolve({ status: 'undetermined' }));
+    if (status !== 'granted') {
+      Alert.alert('Cần quyền', 'Vui lòng cho phép truy cập camera để chụp ảnh.');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync(imagePickerOptions);
+    if (!result.canceled && result.assets?.[0]) {
+      setPhoto(result.assets[0]);
+      setError(null);
+    }
+  };
+
+  const pickFromGallery = async () => {
+    if (!ImagePicker) {
+      Alert.alert('Thông báo', 'Tính năng ảnh cần cài đặt expo-image-picker.');
       return;
     }
     const { status } = await (ImagePicker.requestMediaLibraryPermissionsAsync?.() ?? Promise.resolve({ status: 'undetermined' }));
@@ -38,13 +63,9 @@ export default function HoiAiAskScreen({ navigation }) {
       Alert.alert('Cần quyền', 'Vui lòng cho phép truy cập thư viện ảnh.');
       return;
     }
-    const pickerResult = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions?.Images ?? 'images',
-      allowsEditing: true,
-      quality: 0.8,
-    });
-    if (!pickerResult.canceled && pickerResult.assets?.[0]) {
-      setPhoto(pickerResult.assets[0]);
+    const result = await ImagePicker.launchImageLibraryAsync(imagePickerOptions);
+    if (!result.canceled && result.assets?.[0]) {
+      setPhoto(result.assets[0]);
       setError(null);
     }
   };
@@ -95,7 +116,7 @@ export default function HoiAiAskScreen({ navigation }) {
           <Ionicons name="sparkles" size={iconSizes.lg} color={colors.primary} />
           <Text style={styles.cardTitle}>Đặt câu hỏi cho AI</Text>
         </View>
-        <Text style={styles.hint}>Nhập câu hỏi hoặc đính kèm ảnh câu hỏi</Text>
+        <Text style={styles.hint}>Nhập câu hỏi hoặc chụp/chọn ảnh (có thể cắt ảnh trước khi gửi)</Text>
         
         <TextInput
           style={styles.input}
@@ -118,16 +139,24 @@ export default function HoiAiAskScreen({ navigation }) {
         )}
 
         <View style={styles.actions}>
-          <TouchableOpacity 
-            style={styles.photoButton} 
-            onPress={pickImage} 
+          <TouchableOpacity
+            style={styles.photoButton}
+            onPress={takePhoto}
             disabled={loading}
             activeOpacity={0.8}
           >
-            <Ionicons name="image-outline" size={iconSizes.md} color={colors.primary} />
-            <Text style={styles.photoButtonText}>Đính kèm ảnh</Text>
+            <Ionicons name="camera" size={iconSizes.md} color={colors.primary} />
+            <Text style={styles.photoButtonText} numberOfLines={1}>Chụp ảnh</Text>
           </TouchableOpacity>
-
+          <TouchableOpacity
+            style={styles.photoButton}
+            onPress={pickFromGallery}
+            disabled={loading}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="images" size={iconSizes.md} color={colors.primary} />
+            <Text style={styles.photoButtonText} numberOfLines={1}>Chọn ảnh</Text>
+          </TouchableOpacity>
           <TouchableOpacity
             style={[styles.submitBtn, loading && styles.submitBtnDisabled]}
             onPress={submit}
@@ -139,7 +168,7 @@ export default function HoiAiAskScreen({ navigation }) {
             ) : (
               <>
                 <Ionicons name="send" size={iconSizes.md} color="#fff" />
-                <Text style={styles.submitBtnText}>Gửi</Text>
+                <Text style={styles.submitBtnText}>Hỏi AI</Text>
               </>
             )}
           </TouchableOpacity>
@@ -169,7 +198,18 @@ export default function HoiAiAskScreen({ navigation }) {
           </View>
           
           <View style={styles.answerBubble}>
-            <Text style={styles.answer}>{result.answer ?? '—'}</Text>
+            {(() => {
+              if (!result.answer) return <Text style={styles.answer}>—</Text>;
+              try {
+                // Backend returns answer as JSON-encoded string (to avoid broken equations)
+                // API client already parsed outer JSON, but answer field is still JSON string
+                const htmlAnswer = JSON.parse(result.answer);
+                return <MathText value={htmlAnswer} containerStyle={styles.mathAnswer} />;
+              } catch (e) {
+                // Fallback: show as plain text if JSON parse fails
+                return <Text style={styles.answer}>{String(result.answer)}</Text>;
+              }
+            })()}
           </View>
 
           {(result.hocphan_suggested || result.difficulty_level || result.usefulness_score != null) && (
@@ -265,28 +305,33 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
-    gap: spacing.md,
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
   },
   photoButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
     borderRadius: borderRadius.md,
     backgroundColor: colors.primaryTint,
     borderWidth: 1.5,
     borderColor: colors.primary,
     gap: spacing.xs,
     minHeight: minTouchTargetSize,
+    minWidth: 100,
   },
-  photoButtonText: { 
-    ...typography.body, 
+  photoButtonText: {
+    ...typography.bodySmall,
     color: colors.primary,
     fontWeight: '600',
   },
   submitBtn: {
     flex: 1,
+    minWidth: 100,
     flexDirection: 'row',
     backgroundColor: colors.primary,
     paddingVertical: spacing.md,
@@ -355,6 +400,7 @@ const styles = StyleSheet.create({
     color: colors.text,
     lineHeight: 24,
   },
+  mathAnswer: { backgroundColor: 'transparent' },
   meta: { 
     flexDirection: 'row', 
     flexWrap: 'wrap', 

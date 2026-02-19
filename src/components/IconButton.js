@@ -79,7 +79,7 @@ export default function IconButton({
         style,
       ]}
       onPress={onPress}
-      disabled={disabled || loading}
+      disabled={Boolean(disabled || loading)}
       activeOpacity={0.8}
     >
       {loading ? (
