@@ -97,7 +97,7 @@ export default function MenuScreen() {
           icon="trophy-outline"
           iconColor={colors.warning}
           label="Thành tích"
-          onPress={() => goToTab('Gamification')}
+          onPress={() => goTo('Profile')}
         />
         <MenuRow
           icon="podium-outline"

@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Platform, Animated } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, borderRadius, typography, iconSizes } from '../theme';
 
@@ -7,6 +8,7 @@ import { colors, spacing, borderRadius, typography, iconSizes } from '../theme';
  * CustomTabBar - Enhanced bottom tab bar with animated active indicator
  */
 export default function CustomTabBar({ state, descriptors, navigation }) {
+  const insets = useSafeAreaInsets();
   const [animatedValues] = React.useState(
     state.routes.map(() => new Animated.Value(0))
   );
@@ -29,14 +31,14 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
       MonThi: isFocused ? 'school' : 'school-outline',
       Topics: isFocused ? 'book' : 'book-outline',
       HoiAi: isFocused ? 'sparkles' : 'sparkles-outline',
-      Gamification: isFocused ? 'trophy' : 'trophy-outline',
       Menu: isFocused ? 'menu' : 'menu-outline',
     };
     return iconMap[routeName] || 'ellipse-outline';
   };
 
+  const horizontalPadding = Math.max(Platform.OS === 'ios' ? 20 : 16, insets.left, insets.right);
   return (
-    <View style={styles.tabBar}>
+    <View style={[styles.tabBar, { paddingHorizontal: horizontalPadding }]}>
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
         const label =
@@ -125,7 +127,6 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
     paddingTop: 4,
     paddingBottom: Platform.OS === 'ios' ? spacing.sm : 4,
-    paddingHorizontal: spacing.xs,
     height: Platform.OS === 'ios' ? 56 : 52,
   },
   tab: {

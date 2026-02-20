@@ -32,7 +32,6 @@ export function HeaderRight() {
 
   const userData = user?.user ?? user;
   const name = userData?.name ?? userData?.profile?.nickname ?? '—';
-  const email = userData?.email ?? '—';
   const avatarUri = userData?.profile?.avatar ?? null;
 
   useEffect(() => {
@@ -50,11 +49,6 @@ export function HeaderRight() {
   const xp = gamification?.xp != null ? gamification.xp : '—';
   const levelXpText = typeof xp === 'number' ? `Cấp ${level} · ${xp.toLocaleString()} XP` : `Cấp ${level} · ${xp} XP`;
 
-  const goSearch = () => {
-    const root = navigation.getParent?.() ?? navigation;
-    root.navigate('Search');
-  };
-
   const goProfile = () => {
     const root = navigation.getParent?.() ?? navigation;
     root.navigate('Profile');
@@ -62,9 +56,6 @@ export function HeaderRight() {
 
   return (
     <View style={styles.right}>
-      <TouchableOpacity onPress={goSearch} style={styles.searchBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-        <Ionicons name="search" size={iconSizes.lg} color={colors.textSecondary} />
-      </TouchableOpacity>
       <TouchableOpacity style={styles.accountBlock} onPress={goProfile} activeOpacity={0.7}>
         <View style={styles.avatarWrap}>
           {avatarUri ? (
@@ -77,7 +68,6 @@ export function HeaderRight() {
         </View>
         <View style={styles.accountText}>
           <Text style={styles.accountName} numberOfLines={1}>{name}</Text>
-          <Text style={styles.accountEmail} numberOfLines={1}>{email}</Text>
           <Text style={styles.accountLevelXp}>{levelXpText}</Text>
         </View>
       </TouchableOpacity>
@@ -90,6 +80,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+    paddingVertical: spacing.sm,
   },
   logo: {
     width: 36,
@@ -97,7 +88,7 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.subtitle,
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '700',
     color: colors.text,
     letterSpacing: 0.5,
@@ -105,12 +96,7 @@ const styles = StyleSheet.create({
   right: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-  },
-  searchBtn: {
-    padding: spacing.xs,
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingVertical: spacing.sm,
   },
   accountBlock: {
     flexDirection: 'row',
@@ -118,7 +104,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingVertical: spacing.xs,
     paddingLeft: spacing.xs,
-    maxWidth: 200,
+    maxWidth: 220,
   },
   avatarWrap: {
     width: 36,
@@ -141,22 +127,21 @@ const styles = StyleSheet.create({
   accountText: {
     flex: 1,
     minWidth: 0,
+    justifyContent: 'center',
+    gap: 2,
   },
   accountName: {
     ...typography.bodySmall,
     fontWeight: '600',
     color: colors.text,
-    fontSize: 13,
-  },
-  accountEmail: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    marginTop: 0,
+    fontSize: 10,
+    lineHeight: 12,
   },
   accountLevelXp: {
-    fontSize: 11,
+    fontSize: 9,
     color: colors.primary,
-    marginTop: 1,
+    marginTop: 2,
     fontWeight: '600',
+    lineHeight: 12,
   },
 });

@@ -94,7 +94,7 @@ export default function HomeScreen({ navigation }) {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <View style={[styles.container, { paddingTop: 0, paddingBottom: insets.bottom }]}>
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -189,12 +189,12 @@ export default function HomeScreen({ navigation }) {
           </View>
         )}
 
-        {/* Leaderboard Widget - tap header to open Thành tích (Gamification) */}
+        {/* Leaderboard Widget - tap header to open Profile (Thành tích merged there) */}
         {leaderboard.length > 0 && (
           <View style={styles.leaderboardSection}>
             <TouchableOpacity
               style={styles.sectionHeader}
-              onPress={() => navigation.navigate('Gamification')}
+              onPress={() => navigation.getParent()?.navigate('Profile')}
               activeOpacity={0.8}
             >
               <View style={styles.sectionHeaderLeft}>
@@ -365,11 +365,13 @@ const styles = StyleSheet.create({
   },
   greeting: {
     ...typography.title,
+    fontSize: 18,
     color: '#fff',
     marginBottom: spacing.xs,
   },
   greetingSubtitle: {
     ...typography.bodySmall,
+    fontSize: 12,
     color: 'rgba(255,255,255,0.9)',
   },
   headerActions: {

@@ -25,7 +25,6 @@ import ResultScreen from '../screens/ResultScreen';
 import ScoreboardScreen from '../screens/ScoreboardScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import LimitsScreen from '../screens/LimitsScreen';
-import GamificationScreen from '../screens/GamificationScreen';
 import HoiAiAskScreen from '../screens/HoiAiAskScreen';
 import HoiAiHistoryScreen from '../screens/HoiAiHistoryScreen';
 import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
@@ -68,13 +67,14 @@ function MainTabs() {
         headerTitle: () => null,
         headerLeft: () => <HeaderLeft />,
         headerRight: () => <HeaderRight />,
+        headerStyle: { ...headerOptions.headerStyle, minHeight: 60 },
+        sceneContainerStyle: { paddingTop: 0 },
       }}
     >
       <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Trang chủ', tabBarLabel: 'Trang chủ' }} />
       <Tab.Screen name="MonThi" component={MonThiScreen} options={{ title: 'Môn thi', tabBarLabel: 'Môn thi' }} />
       <Tab.Screen name="Topics" component={TopicsScreen} options={{ title: 'Học phần', tabBarLabel: 'Học phần' }} />
       <Tab.Screen name="HoiAi" component={HoiAiStack} options={{ title: 'Hỏi AI', tabBarLabel: 'Hỏi AI', headerShown: false }} />
-      <Tab.Screen name="Gamification" component={GamificationScreen} options={{ title: 'Thành tích', tabBarLabel: 'Thành tích' }} />
       <Tab.Screen name="Menu" component={MenuScreen} options={{ title: 'Menu', tabBarLabel: 'Menu' }} />
     </Tab.Navigator>
   );
