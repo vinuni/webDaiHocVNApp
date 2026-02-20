@@ -1,11 +1,39 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image } from 'react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image, PanResponder } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiClient } from '../api/client';
 import MathText from '../components/MathText';
 import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize, gradients, iconSizes } from '../theme';
+
+function ExamProgressHeader({ answers, questionsLength, minutesLeft, tendethi, deThiTendethi }) {
+  const answeredCount = Object.keys(answers).length;
+  const progressPercent = questionsLength > 0 ? (answeredCount / questionsLength) * 100 : 0;
+  return (
+    <LinearGradient
+      colors={gradients.primary}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.header}
+    >
+      <View style={styles.headerRow}>
+        <View style={styles.headerLeft}>
+          <Text style={styles.questionProgress}>{answeredCount}/{questionsLength}</Text>
+          <Text style={styles.progressLabel}>câu</Text>
+        </View>
+        <View style={styles.timerBadge}>
+          <Ionicons name="time" size={iconSizes.xs} color="#fff" />
+          <Text style={styles.timer}>{minutesLeft}′</Text>
+        </View>
+      </View>
+      <View style={styles.progressBarWrap}>
+        <View style={[styles.progressBarFill, { width: `${progressPercent}%` }]} />
+      </View>
+      <Text style={styles.examTitle} numberOfLines={1}>{tendethi || deThiTendethi}</Text>
+    </LinearGradient>
+  );
+}
 
 export default function ExamTakeScreen({ route, navigation }) {
   const insets = useSafeAreaInsets();
@@ -73,46 +101,48 @@ export default function ExamTakeScreen({ route, navigation }) {
     if (currentQuestionIndex < questions.length - 1) setCurrentQuestionIndex(currentQuestionIndex + 1);
   };
 
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => false,
+        onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 25 && Math.abs(g.dx) > Math.abs(g.dy),
+        onPanResponderRelease: (_, g) => {
+          if (g.dx > 55) goToPrevious();
+          else if (g.dx < -55) goToNext();
+        },
+      }),
+    [goToPrevious, goToNext]
+  );
+
   if (loading) return (<View style={styles.centered}><ActivityIndicator size="large" color={colors.primary} /></View>);
   if (!questions.length) return (<View style={styles.centered}><Text style={styles.emptyText}>Không có câu hỏi.</Text></View>);
 
   const choices = ['A', 'B', 'C', 'D', 'E'];
   const answeredCount = Object.keys(answers).length;
-  const progressPercent = (answeredCount / questions.length) * 100;
   const currentQuestion = questions[currentQuestionIndex];
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-      {/* Compact progress header */}
-      <LinearGradient
-        colors={gradients.primary}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.header}
-      >
-        <View style={styles.headerRow}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.questionProgress}>{answeredCount}/{questions.length}</Text>
-            <Text style={styles.progressLabel}>câu</Text>
-          </View>
-          <View style={styles.timerBadge}>
-            <Ionicons name="time" size={iconSizes.xs} color="#fff" />
-            <Text style={styles.timer}>{minutesLeft}′</Text>
-          </View>
-        </View>
-        <View style={styles.progressBarWrap}>
-          <View style={[styles.progressBarFill, { width: `${progressPercent}%` }]} />
-        </View>
-        <Text style={styles.examTitle} numberOfLines={1}>{tendethi || deThi?.tendethi}</Text>
-      </LinearGradient>
+      <ExamProgressHeader
+        answers={answers}
+        questionsLength={questions.length}
+        minutesLeft={minutesLeft}
+        tendethi={tendethi}
+        deThiTendethi={deThi?.tendethi}
+      />
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.questionBlock}>
+        <View style={styles.questionBlock} {...panResponder.panHandlers}>
           <View style={styles.questionTopRow}>
             <View style={styles.questionHeader}>
-              <View style={[styles.questionNumber, answers[currentQuestion.id] != null && styles.questionNumberAnswered]}>
+              <LinearGradient
+                colors={answers[currentQuestion.id] != null ? gradients.success : gradients.primary}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.questionNumberGradient}
+              >
                 <Text style={styles.questionNumberText}>{currentQuestionIndex + 1}</Text>
-              </View>
+              </LinearGradient>
               <Text style={styles.qLabel}>Câu {currentQuestionIndex + 1}</Text>
             </View>
             <View style={styles.fontSizeControls}>
@@ -154,22 +184,28 @@ export default function ExamTakeScreen({ route, navigation }) {
                   style={[styles.option, selected && styles.optionSelected]}
                   onPress={() => setAnswer(currentQuestion.id, c)}
                   activeOpacity={0.7}
+                  accessible={true}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected }}
                 >
-                  <View style={[styles.optionBadge, selected && styles.optionBadgeSelected]}>
+                  <View style={[styles.optionBadge, selected && styles.optionBadgeSelected]} pointerEvents="none">
                     <Text style={[styles.optionLetter, selected && styles.optionLetterSelected]}>{c}</Text>
                   </View>
-                  <View style={styles.optionContent}>
+                  <View style={styles.optionContent} pointerEvents="none">
                     <MathText value={opt} containerStyle={selected ? styles.optionMathSelected : undefined} contentFontSize={questionFontSize} />
                   </View>
                   {selected && (
-                    <View style={styles.checkIconWrap}>
-                      <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
+                    <View style={styles.checkIconWrap} pointerEvents="none">
+                      <Ionicons name="checkmark-circle" size={18} color={colors.primary} />
                     </View>
                   )}
                 </TouchableOpacity>
               );
             })}
           </View>
+          <Text style={styles.swipeHint}>
+            <Ionicons name="swap-horizontal" size={14} color={colors.textMuted} /> Vuốt trái/phải để chuyển câu
+          </Text>
         </View>
 
         {/* Question Navigation */}
@@ -228,19 +264,26 @@ export default function ExamTakeScreen({ route, navigation }) {
 
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.submitBtn, submitting && styles.submitBtnDisabled]}
+          style={[styles.submitBtnWrap, submitting && styles.submitBtnDisabled]}
           onPress={handleSubmit}
           disabled={submitting}
-          activeOpacity={0.8}
+          activeOpacity={0.9}
         >
-          {submitting ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <>
-              <Ionicons name="send" size={iconSizes.md} color="#fff" style={styles.submitIcon} />
-              <Text style={styles.submitBtnText}>Nộp bài ({answeredCount}/{questions.length})</Text>
-            </>
-          )}
+          <LinearGradient
+            colors={gradients.success}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.submitBtn}
+          >
+            {submitting ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <>
+                <Ionicons name="send" size={iconSizes.md} color="#fff" style={styles.submitIcon} />
+                <Text style={styles.submitBtnText}>Nộp bài ({answeredCount}/{questions.length})</Text>
+              </>
+            )}
+          </LinearGradient>
         </TouchableOpacity>
       </View>
     </View>
@@ -289,11 +332,11 @@ const styles = StyleSheet.create({
   },
   timer: { fontSize: 14, color: '#fff', fontWeight: '700' },
   progressBarWrap: {
-    height: 4,
-    backgroundColor: 'rgba(255,255,255,0.3)',
+    height: 6,
+    backgroundColor: 'rgba(255,255,255,0.35)',
     borderRadius: borderRadius.full,
     overflow: 'hidden',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   progressBarFill: {
     height: '100%',
@@ -313,11 +356,11 @@ const styles = StyleSheet.create({
   questionBlock: {
     marginBottom: spacing.lg,
     backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.lg,
     padding: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...shadows.card,
+    borderWidth: 2,
+    borderColor: colors.borderLight,
+    ...shadows.cardLg,
   },
   questionTopRow: {
     flexDirection: 'row',
@@ -331,16 +374,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.xs,
   },
-  questionNumber: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: colors.primary,
+  questionNumberGradient: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  questionNumberAnswered: {
-    backgroundColor: colors.success,
+    overflow: 'hidden',
   },
   questionNumberText: {
     ...typography.caption,
@@ -379,27 +419,30 @@ const styles = StyleSheet.create({
   option: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 2,
-    paddingHorizontal: 6,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
     backgroundColor: colors.surface,
-    borderRadius: borderRadius.sm,
-    borderWidth: 1.5,
+    borderRadius: borderRadius.md,
+    borderWidth: 2,
     borderColor: colors.border,
+    marginBottom: spacing.xs,
+    minHeight: minTouchTargetSize,
+    alignSelf: 'stretch',
     ...shadows.cardSm,
   },
-  optionSelected: { 
-    backgroundColor: colors.primaryTint, 
+  optionSelected: {
+    backgroundColor: colors.primaryTint,
     borderColor: colors.primary,
     ...shadows.card,
   },
   optionBadge: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     backgroundColor: colors.backgroundDark,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 6,
+    marginRight: spacing.sm,
   },
   optionBadgeSelected: {
     backgroundColor: colors.primary,
@@ -415,7 +458,14 @@ const styles = StyleSheet.create({
   optionContent: { flex: 1 },
   optionMathSelected: {},
   checkIconWrap: {
-    marginLeft: 4,
+    marginLeft: spacing.xs,
+  },
+  swipeHint: {
+    ...typography.caption,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
   },
   navButtons: {
     flexDirection: 'row',
@@ -428,16 +478,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.md,
     paddingHorizontal: spacing.md,
-    backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.primary,
+    borderWidth: 2,
     gap: spacing.xs,
+    ...shadows.cardSm,
   },
-  navBtnPrev: {},
-  navBtnNext: {},
+  navBtnPrev: {
+    backgroundColor: colors.surface,
+    borderColor: colors.primary,
+  },
+  navBtnNext: {
+    backgroundColor: colors.primaryTint,
+    borderColor: colors.primary,
+  },
   navBtnDisabled: {
     borderColor: colors.border,
     backgroundColor: colors.backgroundDark,
@@ -445,18 +500,19 @@ const styles = StyleSheet.create({
   navBtnText: {
     ...typography.bodySmall,
     color: colors.primary,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   navBtnTextDisabled: {
     color: colors.textMuted,
   },
   questionGrid: {
     marginTop: spacing.xl,
-    padding: spacing.md,
+    padding: spacing.lg,
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderWidth: 2,
+    borderColor: colors.borderLight,
+    ...shadows.card,
   },
   gridTitle: {
     ...typography.subtitle,
@@ -467,7 +523,7 @@ const styles = StyleSheet.create({
   gridWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.xs,
+    gap: spacing.sm,
   },
   gridItem: {
     width: 44,
@@ -475,8 +531,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.backgroundDark,
-    borderRadius: borderRadius.sm,
-    borderWidth: 1,
+    borderRadius: borderRadius.md,
+    borderWidth: 2,
     borderColor: colors.border,
   },
   gridItemAnswered: {
@@ -494,6 +550,7 @@ const styles = StyleSheet.create({
   },
   gridItemTextAnswered: {
     color: colors.success,
+    fontWeight: '700',
   },
   gridItemTextCurrent: {
     color: '#fff',
@@ -505,15 +562,18 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
+  submitBtnWrap: {
+    borderRadius: borderRadius.md,
+    overflow: 'hidden',
+    ...shadows.buttonSuccess,
+  },
   submitBtn: {
     flexDirection: 'row',
-    backgroundColor: colors.success,
     padding: spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: minTouchTargetSize,
     borderRadius: borderRadius.md,
-    ...shadows.buttonSuccess,
   },
   submitIcon: {
     marginRight: spacing.sm,

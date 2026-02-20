@@ -22,6 +22,7 @@ export default function HomeScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedMonThiId, setSelectedMonThiId] = useState(null);
+  const [studyMaterialsExpanded, setStudyMaterialsExpanded] = useState(false);
 
   const userName = user?.user?.name || user?.name || 'Bạn';
   const firstName = userName.split(' ').pop();
@@ -94,41 +95,42 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-      {/* Gradient Header Banner */}
-      <LinearGradient
-        colors={gradients.primary}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.headerBanner}
-      >
-        <View style={styles.headerContent}>
-          <View>
-            <Text style={styles.greeting}>Xin chào, {firstName}! 👋</Text>
-            <Text style={styles.greetingSubtitle}>Sẵn sàng luyện tập hôm nay?</Text>
-          </View>
-          <View style={styles.headerActions}>
-            <TouchableOpacity 
-              style={styles.headerButton} 
-              onPress={() => navigation.navigate('HoiAi')} 
-              activeOpacity={0.8}
-            >
-              <Ionicons name="sparkles" size={iconSizes.md} color="#fff" />
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.headerButton} 
-              onPress={() => navigation.getParent()?.navigate('Search')} 
-              activeOpacity={0.8}
-            >
-              <Ionicons name="search" size={iconSizes.md} color="#fff" />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </LinearGradient>
-
       <ScrollView 
-        style={styles.content}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={<RefreshControl refreshing={Boolean(refreshing)} onRefresh={onRefresh} colors={[colors.primary]} />}
       >
+        {/* Gradient Header Banner - scrolls away with content */}
+        <LinearGradient
+          colors={gradients.primary}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.headerBanner}
+        >
+          <View style={styles.headerContent}>
+            <View>
+              <Text style={styles.greeting}>Xin chào, {firstName}! 👋</Text>
+              <Text style={styles.greetingSubtitle}>Sẵn sàng luyện tập hôm nay?</Text>
+            </View>
+            <View style={styles.headerActions}>
+              <TouchableOpacity 
+                style={styles.headerButton} 
+                onPress={() => navigation.navigate('HoiAi')} 
+                activeOpacity={0.8}
+              >
+                <Ionicons name="sparkles" size={iconSizes.md} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.headerButton} 
+                onPress={() => navigation.getParent()?.navigate('Search')} 
+                activeOpacity={0.8}
+              >
+                <Ionicons name="search" size={iconSizes.md} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </LinearGradient>
+
         {/* Introduction Section */}
         <View style={styles.introCard}>
           <View style={styles.introHeader}>
@@ -146,48 +148,61 @@ export default function HomeScreen({ navigation }) {
           </Text>
         </View>
 
-        {/* Study Materials Summary */}
+        {/* Study Materials Summary - foldable, collapsed by default */}
         {studyMaterialsSummary.length > 0 && (
           <View style={styles.studyMaterialsSection}>
-            <View style={styles.sectionHeader}>
+            <TouchableOpacity
+              style={styles.sectionHeader}
+              onPress={() => setStudyMaterialsExpanded((v) => !v)}
+              activeOpacity={0.8}
+            >
               <View style={styles.sectionHeaderLeft}>
                 <Ionicons name="book" size={iconSizes.md} color={colors.success} />
                 <Text style={styles.sectionTitle}>Tài Liệu Học Tập</Text>
               </View>
-            </View>
-            <View style={styles.studyMaterialsGrid}>
-              {studyMaterialsSummary.map((sm, idx) => (
-                <TouchableOpacity
-                  key={`sm-${sm.mon_thi_id}-${idx}`}
-                  style={[styles.studyMaterialCard, { borderLeftColor: getSubjectColor(sm.tenmonthi) }]}
-                  onPress={() => navigation.navigate('Topics', { screen: 'TopicsList', params: { monThiId: sm.mon_thi_id } })}
-                  activeOpacity={0.8}
-                >
-                  <View style={styles.studyMaterialContent}>
-                    <Text style={styles.studyMaterialTitle}>{sm.tenmonthi}</Text>
-                    <Text style={styles.studyMaterialCount}>
-                      <Ionicons name="book-outline" size={12} color={colors.textMuted} /> {sm.count} tài liệu
-                    </Text>
-                  </View>
-                  <Ionicons name="arrow-forward" size={iconSizes.sm} color={colors.primary} />
-                </TouchableOpacity>
-              ))}
-            </View>
+              <Ionicons
+                name={studyMaterialsExpanded ? 'chevron-up' : 'chevron-down'}
+                size={iconSizes.md}
+                color={colors.textMuted}
+              />
+            </TouchableOpacity>
+            {studyMaterialsExpanded && (
+              <View style={styles.studyMaterialsGrid}>
+                {studyMaterialsSummary.map((sm, idx) => (
+                  <TouchableOpacity
+                    key={`sm-${sm.mon_thi_id}-${idx}`}
+                    style={[styles.studyMaterialCard, { borderLeftColor: getSubjectColor(sm.tenmonthi) }]}
+                    onPress={() => navigation.navigate('Topics', { screen: 'TopicsList', params: { monThiId: sm.mon_thi_id } })}
+                    activeOpacity={0.8}
+                  >
+                    <View style={styles.studyMaterialContent}>
+                      <Text style={styles.studyMaterialTitle}>{sm.tenmonthi}</Text>
+                      <Text style={styles.studyMaterialCount}>
+                        <Ionicons name="book-outline" size={12} color={colors.textMuted} /> {sm.count} tài liệu
+                      </Text>
+                    </View>
+                    <Ionicons name="arrow-forward" size={iconSizes.sm} color={colors.primary} />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
           </View>
         )}
 
-        {/* Leaderboard Widget */}
+        {/* Leaderboard Widget - tap header to open Thành tích (Gamification) */}
         {leaderboard.length > 0 && (
           <View style={styles.leaderboardSection}>
-            <View style={styles.sectionHeader}>
+            <TouchableOpacity
+              style={styles.sectionHeader}
+              onPress={() => navigation.navigate('Gamification')}
+              activeOpacity={0.8}
+            >
               <View style={styles.sectionHeaderLeft}>
                 <Ionicons name="trophy" size={iconSizes.md} color={colors.warning} />
                 <Text style={styles.sectionTitle}>Bảng Xếp Hạng</Text>
               </View>
-              <TouchableOpacity onPress={() => navigation.getParent()?.navigate('Scoreboard')} activeOpacity={0.8}>
-                <Text style={styles.seeAllLink}>Xem tất cả</Text>
-              </TouchableOpacity>
-            </View>
+              <Ionicons name="chevron-forward" size={iconSizes.sm} color={colors.textMuted} />
+            </TouchableOpacity>
             <View style={styles.leaderboardCard}>
               {leaderboard.slice(0, 5).map((entry, idx) => {
                 const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : null;
@@ -369,16 +384,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  content: {
+  scrollView: {
     flex: 1,
+  },
+  scrollContent: {
     paddingHorizontal: spacing.lg,
-    marginTop: -spacing.lg,
     paddingBottom: spacing.xl,
   },
   introCard: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
     padding: spacing.md,
+    marginTop: spacing.md,
     marginBottom: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
@@ -428,11 +445,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-  },
-  seeAllLink: {
-    ...typography.caption,
-    color: colors.primary,
-    fontWeight: '600',
   },
   studyMaterialsGrid: {
     gap: spacing.xs,

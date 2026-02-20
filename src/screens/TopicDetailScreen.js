@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { apiClient } from '../api/client';
-import { colors, spacing, borderRadius, typography, iconSizes } from '../theme';
+import { colors, spacing, borderRadius, typography, iconSizes, minTouchTargetSize, shadows } from '../theme';
 
 const PER_PAGE = 10;
 
@@ -107,6 +107,7 @@ export default function TopicDetailScreen({ route, navigation }) {
           <>
             {deThisNhanh.map((item, index) => {
               const attempted = item.user_attempted === true;
+              const examColor = colors.primary;
               const onPress = () => {
                 if (attempted) {
                   navigation.navigate('Result', {
@@ -124,11 +125,11 @@ export default function TopicDetailScreen({ route, navigation }) {
               return (
                 <TouchableOpacity
                   key={`de-thi-nhanh-${item.id}-${index}`}
-                  style={styles.examRow}
+                  style={styles.examCard}
                   onPress={onPress}
                   activeOpacity={0.7}
                 >
-                  <View style={styles.examAccent} />
+                  <View style={[styles.examAccent, { backgroundColor: examColor }]} />
                   <View style={styles.examContent}>
                     <View style={styles.examTitleRow}>
                       <Text style={styles.examTitle} numberOfLines={2}>
@@ -140,21 +141,32 @@ export default function TopicDetailScreen({ route, navigation }) {
                           <Text style={styles.attemptedBadgeText}>Đã làm</Text>
                         </View>
                       )}
+                      {item.is_new && !attempted && (
+                        <View style={styles.newBadge}>
+                          <Ionicons name="flash" size={10} color={colors.warning} />
+                          <Text style={styles.newBadgeText}>MỚI</Text>
+                        </View>
+                      )}
                     </View>
                     <View style={styles.examMeta}>
                       <View style={styles.metaItem}>
                         <Ionicons name="time-outline" size={iconSizes.sm} color={colors.primary} />
                         <Text style={styles.metaText}>{item.thoigian} phút</Text>
                       </View>
-                      {item.cau_hois_count != null && (
-                        <View style={styles.metaItem}>
-                          <Ionicons name="document-outline" size={iconSizes.sm} color={colors.secondary} />
-                          <Text style={styles.metaText}>{item.cau_hois_count} câu</Text>
-                        </View>
-                      )}
+                      <View style={styles.metaItem}>
+                        <Ionicons name="document-outline" size={iconSizes.sm} color={colors.secondary} />
+                        <Text style={styles.metaText}>{item.cau_hois_count ?? '—'} câu</Text>
+                      </View>
+                      <View style={styles.metaItem}>
+                        <Ionicons name="star" size={iconSizes.sm} color={colors.warning} />
+                        <Text style={styles.metaText}>{(item.bestscore ?? item.user_diem ?? 0).toFixed(1)}</Text>
+                      </View>
+                    </View>
+                    <View style={styles.examTypeIndicator}>
+                      <Text style={[styles.examTypeText, { color: examColor }]}>⚡ Đề Nhanh</Text>
                     </View>
                   </View>
-                  <Ionicons name="chevron-forward" size={iconSizes.sm} color={colors.textMuted} />
+                  <Ionicons name="chevron-forward" size={iconSizes.md} color={colors.textMuted} />
                 </TouchableOpacity>
               );
             })}
@@ -208,11 +220,59 @@ const styles = StyleSheet.create({
   sectionTitle: { ...typography.subtitle, color: colors.text },
   placeholderText: { ...typography.bodySmall, color: colors.textMuted, marginTop: 4 },
   emptyList: { ...typography.bodySmall, color: colors.textMuted, marginTop: spacing.sm },
-  examRow: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.sm, paddingVertical: spacing.sm, paddingLeft: spacing.sm, backgroundColor: colors.backgroundDark, borderRadius: 8, borderLeftWidth: 4, borderLeftColor: colors.primary },
-  examAccent: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, backgroundColor: 'transparent' },
-  examContent: { flex: 1, marginLeft: spacing.xs },
-  examTitleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, flexWrap: 'wrap' },
-  examTitle: { ...typography.body, color: colors.text, fontWeight: '600', flex: 1 },
+  examCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    minHeight: minTouchTargetSize + 20,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    marginTop: spacing.sm,
+    marginBottom: 0,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadows.cardSm,
+    overflow: 'hidden',
+  },
+  examAccent: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
+    backgroundColor: colors.primary,
+  },
+  examContent: {
+    flex: 1,
+    marginLeft: spacing.sm,
+  },
+  examTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.xs,
+    marginBottom: spacing.xxs,
+  },
+  examTitle: {
+    ...typography.body,
+    color: colors.text,
+    fontWeight: '600',
+    flex: 1,
+  },
+  newBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.warningTint,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: borderRadius.xs,
+    gap: 2,
+  },
+  newBadgeText: {
+    ...typography.captionSmall,
+    color: colors.warning,
+    fontWeight: '700',
+    fontSize: 9,
+  },
   attemptedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -223,13 +283,32 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   attemptedBadgeText: {
-    fontSize: 9,
+    ...typography.captionSmall,
     color: colors.success,
     fontWeight: '700',
+    fontSize: 9,
   },
-  examMeta: { flexDirection: 'row', marginTop: 4, gap: spacing.sm },
-  metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  metaText: { ...typography.bodySmall, color: colors.textSecondary },
+  examMeta: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.xxs,
+  },
+  examTypeIndicator: {
+    marginTop: 2,
+  },
+  examTypeText: {
+    ...typography.captionSmall,
+    fontWeight: '600',
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  metaText: {
+    ...typography.caption,
+    color: colors.textSecondary,
+  },
   loadMoreBtn: { marginTop: spacing.md, paddingVertical: spacing.sm, alignItems: 'center', justifyContent: 'center', minHeight: 44 },
   loadMoreText: { ...typography.body, color: colors.primary, fontWeight: '600' },
 });

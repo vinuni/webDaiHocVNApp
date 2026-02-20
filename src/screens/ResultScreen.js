@@ -64,46 +64,51 @@ export default function ResultScreen({ route, navigation }) {
           </Text>
         </LinearGradient>
 
-        {/* Score Card */}
-        <View style={styles.scoreCard}>
+        {/* Score Card - modern gradient border effect */}
+        <View style={[styles.scoreCard, isPassed ? styles.scoreCardPass : styles.scoreCardFail]}>
           <Text style={styles.examTitle} numberOfLines={2}>{tendethi || 'Kết quả'}</Text>
           
           {loading && d == null ? (
             <ActivityIndicator size="large" color={colors.primary} style={styles.loader} />
           ) : (
             <>
-              <ProgressRing
-                progress={scorePercent}
-                size={140}
-                strokeWidth={10}
-                color={isPassed ? colors.success : colors.warning}
-                showPercentage={false}
-              />
-              <Text style={[styles.scoreValue, { color: isPassed ? colors.success : colors.warning }]}>
-                {score.toFixed(1)}
-              </Text>
-              <Text style={styles.scoreLabel}>điểm</Text>
+              <View style={styles.scoreCircleWrap}>
+                <ProgressRing
+                  progress={scorePercent}
+                  size={150}
+                  strokeWidth={12}
+                  color={isPassed ? colors.success : colors.warning}
+                  backgroundColor={isPassed ? colors.successTint : colors.warningTint}
+                  showPercentage={false}
+                />
+                <View style={styles.scoreCircleCenter} pointerEvents="none">
+                  <Text style={[styles.scoreValue, { color: isPassed ? colors.success : colors.warning }]}>
+                    {score.toFixed(1)}
+                  </Text>
+                  <Text style={styles.scoreLabel}>điểm</Text>
+                </View>
+              </View>
               
               <View style={styles.statsRow}>
-                <View style={styles.statBox}>
+                <View style={[styles.statBox, styles.statBoxCorrect]}>
                   <View style={[styles.statIcon, { backgroundColor: colors.successTint }]}>
-                    <Ionicons name="checkmark" size={iconSizes.md} color={colors.success} />
+                    <Ionicons name="checkmark-circle" size={iconSizes.lg} color={colors.success} />
                   </View>
-                  <Text style={styles.statValue}>{c ?? '–'}</Text>
+                  <Text style={[styles.statValue, { color: colors.success }]}>{c ?? '–'}</Text>
                   <Text style={styles.statLabel}>Đúng</Text>
                 </View>
-                <View style={styles.statBox}>
+                <View style={[styles.statBox, styles.statBoxWrong]}>
                   <View style={[styles.statIcon, { backgroundColor: colors.dangerTint }]}>
-                    <Ionicons name="close" size={iconSizes.md} color={colors.danger} />
+                    <Ionicons name="close-circle" size={iconSizes.lg} color={colors.danger} />
                   </View>
-                  <Text style={styles.statValue}>{t && c != null ? t - c : '–'}</Text>
+                  <Text style={[styles.statValue, { color: colors.danger }]}>{t && c != null ? t - c : '–'}</Text>
                   <Text style={styles.statLabel}>Sai</Text>
                 </View>
-                <View style={styles.statBox}>
+                <View style={[styles.statBox, styles.statBoxTotal]}>
                   <View style={[styles.statIcon, { backgroundColor: colors.infoTint }]}>
-                    <Ionicons name="document-text" size={iconSizes.md} color={colors.info} />
+                    <Ionicons name="document-text" size={iconSizes.lg} color={colors.info} />
                   </View>
-                  <Text style={styles.statValue}>{t ?? '–'}</Text>
+                  <Text style={[styles.statValue, { color: colors.info }]}>{t ?? '–'}</Text>
                   <Text style={styles.statLabel}>Tổng</Text>
                 </View>
               </View>
@@ -278,8 +283,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.sm,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.lg,
     paddingHorizontal: spacing.md,
     alignItems: 'center',
     borderBottomLeftRadius: borderRadius.xxl,
@@ -292,42 +297,68 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     color: '#fff',
-    marginBottom: 2,
+    marginBottom: spacing.xs,
   },
   headerSubtitle: {
     fontSize: 13,
     color: 'rgba(255,255,255,0.95)',
     textAlign: 'center',
+    paddingHorizontal: spacing.sm,
   },
   scoreCard: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.xl,
-    padding: spacing.lg,
+    padding: spacing.xl,
     alignItems: 'center',
-    marginHorizontal: spacing.sm,
-    marginTop: -spacing.md,
-    marginBottom: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.lg,
+    marginBottom: spacing.lg,
+    borderWidth: 2,
     ...shadows.cardLg,
+  },
+  scoreCardPass: {
+    borderColor: colors.success,
+    backgroundColor: colors.surface,
+  },
+  scoreCardFail: {
+    borderColor: colors.warning,
+    backgroundColor: colors.surface,
   },
   examTitle: { 
     ...typography.subtitle, 
     marginBottom: spacing.lg, 
     color: colors.text,
     textAlign: 'center',
+    fontWeight: '700',
   },
   loader: { marginVertical: spacing.xl },
+  scoreCircleWrap: {
+    position: 'relative',
+    width: 150,
+    height: 150,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.lg,
+  },
+  scoreCircleCenter: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   scoreValue: { 
     fontSize: 48,
     fontWeight: '800',
-    marginTop: -spacing.xxl - spacing.md,
     marginBottom: spacing.xxs,
   },
   scoreLabel: { 
     ...typography.body, 
     color: colors.textSecondary,
-    marginBottom: spacing.lg,
+    fontWeight: '600',
+    fontSize: 14,
   },
   statsRow: {
     flexDirection: 'row',
@@ -337,28 +368,46 @@ const styles = StyleSheet.create({
   },
   statBox: {
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: spacing.sm,
+    flex: 1,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xs,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  statBoxCorrect: {
+    backgroundColor: colors.successTint,
+    borderColor: colors.success + '40',
+  },
+  statBoxWrong: {
+    backgroundColor: colors.dangerTint,
+    borderColor: colors.danger + '40',
+  },
+  statBoxTotal: {
+    backgroundColor: colors.infoTint,
+    borderColor: colors.info + '40',
   },
   statIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
   },
   statValue: {
-    ...typography.subtitle,
-    color: colors.text,
-    fontWeight: '700',
+    fontSize: 20,
+    fontWeight: '800',
   },
   statLabel: {
     ...typography.caption,
     color: colors.textSecondary,
+    fontWeight: '600',
   },
   questionsSection: {
-    paddingHorizontal: spacing.sm,
-    paddingTop: 2,
-    paddingBottom: spacing.lg,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.xl,
   },
   sectionTitleRow: {
     flexDirection: 'row',
@@ -371,6 +420,7 @@ const styles = StyleSheet.create({
     ...typography.subtitle,
     color: colors.text,
     fontWeight: '700',
+    fontSize: 17,
   },
   fontSizeControls: {
     flexDirection: 'row',
@@ -391,10 +441,11 @@ const styles = StyleSheet.create({
   fontSizeLabel: { fontSize: 12, color: colors.textMuted, marginHorizontal: 2 },
   questionResult: {
     backgroundColor: colors.surface,
-    borderRadius: borderRadius.sm,
-    marginBottom: spacing.xs,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.sm,
+    borderWidth: 2,
+    overflow: 'hidden',
+    ...shadows.cardSm,
   },
   questionResultHeader: {
     flexDirection: 'row',
@@ -467,12 +518,13 @@ const styles = StyleSheet.create({
   optionResult: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 8,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
     backgroundColor: colors.backgroundDark,
-    borderRadius: borderRadius.sm,
-    borderWidth: 1,
+    borderRadius: borderRadius.md,
+    borderWidth: 2,
     borderColor: colors.border,
+    marginBottom: spacing.xs,
   },
   optionResultCorrect: {
     backgroundColor: colors.successTint,

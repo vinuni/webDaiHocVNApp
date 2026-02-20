@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { apiClient } from '../api/client';
 import EmptyState from '../components/EmptyState';
+import { preferencesStorage, getDefaultMonThiId } from '../storage/preferences';
 import { colors, spacing, borderRadius, typography, minTouchTargetSize, shadows, iconSizes } from '../theme';
 
 export default function TopicsScreen({ navigation }) {
@@ -13,7 +14,21 @@ export default function TopicsScreen({ navigation }) {
   const [loadingHocPhan, setLoadingHocPhan] = useState(false);
 
   useEffect(() => {
-    apiClient.get('/api/v1/home').then((res) => setMonThis(res && res.mon_this ? res.mon_this : [])).catch(() => setMonThis([])).finally(() => setLoading(false));
+    let mounted = true;
+    apiClient
+      .get('/api/v1/home')
+      .then(async (res) => {
+        const list = res && res.mon_this ? res.mon_this : [];
+        if (!mounted) return;
+        setMonThis(list);
+        const savedId = await preferencesStorage.getSelectedMonThiId();
+        const validId = list.some((m) => m.id === savedId) ? savedId : null;
+        const initialId = validId ?? getDefaultMonThiId(list);
+        if (initialId != null) setSelectedMonThiId(initialId);
+      })
+      .catch(() => { if (mounted) setMonThis([]); })
+      .finally(() => { if (mounted) setLoading(false); });
+    return () => { mounted = false; };
   }, []);
 
   useEffect(() => {
@@ -21,6 +36,12 @@ export default function TopicsScreen({ navigation }) {
     setLoadingHocPhan(true);
     apiClient.get('/api/v1/hoc-phan?mon_thi=' + selectedMonThiId).then((res) => setHocPhans(Array.isArray(res) ? res : [])).catch(() => setHocPhans([])).finally(() => setLoadingHocPhan(false));
   }, [selectedMonThiId]);
+
+  const selectMonThi = (id) => {
+    const next = id === selectedMonThiId ? null : id;
+    setSelectedMonThiId(next);
+    preferencesStorage.setSelectedMonThiId(next);
+  };
 
   if (loading) return (<View style={styles.centered}><ActivityIndicator size="large" color={colors.primary} /></View>);
 
@@ -53,66 +74,68 @@ export default function TopicsScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Học phần</Text>
-      <Text style={styles.subtitle}>Chọn môn thi</Text>
-      <FlatList
-        horizontal
-        data={monThis}
-        keyExtractor={(item) => String(item.id)}
-        contentContainerStyle={styles.chipList}
-        showsHorizontalScrollIndicator={false}
-        renderItem={({ item }) => {
-          const subjectColor = getSubjectColor(item.id);
-          const isSelected = item.id === selectedMonThiId;
-          return (
-            <TouchableOpacity
-              style={[
-                styles.chip,
-                isSelected && { backgroundColor: subjectColor, borderColor: subjectColor }
-              ]}
-              onPress={() => setSelectedMonThiId(item.id === selectedMonThiId ? null : item.id)}
-              activeOpacity={0.8}
-            >
-              <Ionicons 
-                name={getSubjectIcon(item.tenmonthi)} 
-                size={iconSizes.md} 
-                color={isSelected ? '#fff' : subjectColor} 
-                style={styles.chipIcon}
-              />
-              <Text style={[styles.chipText, isSelected && { color: '#fff' }]}>
-                {item.short_name || item.tenmonthi}
-              </Text>
-            </TouchableOpacity>
-          );
-        }}
-      />
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={true}
+      >
+        <Text style={styles.title}>Học phần</Text>
+        <Text style={styles.chipSectionLabel}>Chọn môn thi</Text>
+        <ScrollView
+          horizontal
+          contentContainerStyle={styles.chipList}
+          showsHorizontalScrollIndicator={false}
+        >
+          {monThis.map((item) => {
+            const subjectColor = getSubjectColor(item.id);
+            const isSelected = item.id === selectedMonThiId;
+            return (
+              <TouchableOpacity
+                key={String(item.id)}
+                style={[
+                  styles.chip,
+                  isSelected && { backgroundColor: subjectColor, borderColor: subjectColor }
+                ]}
+                onPress={() => selectMonThi(item.id)}
+                activeOpacity={0.8}
+              >
+                <Ionicons
+                  name={getSubjectIcon(item.tenmonthi)}
+                  size={iconSizes.md}
+                  color={isSelected ? '#fff' : subjectColor}
+                  style={styles.chipIcon}
+                />
+                <Text style={[styles.chipText, isSelected && { color: '#fff' }]}>
+                  {item.short_name || item.tenmonthi}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
 
-      <View style={styles.listHeader}>
-        <Text style={styles.subtitle}>Danh sách học phần</Text>
-        {hocPhans.length > 0 && (
-          <Text style={styles.countBadge}>{hocPhans.length}</Text>
-        )}
-      </View>
+        <View style={styles.listHeader}>
+          <Text style={styles.subtitle}>Danh sách học phần</Text>
+          {hocPhans.length > 0 && (
+            <Text style={styles.countBadge}>{hocPhans.length}</Text>
+          )}
+        </View>
 
-      {loadingHocPhan ? (
-        <ActivityIndicator style={styles.loader} color={colors.primary} />
-      ) : (
-        <FlatList
-          data={hocPhans}
-          keyExtractor={(item) => String(item.id)}
-          ListEmptyComponent={
-            <EmptyState
-              icon="folder-open-outline"
-              title={selectedMonThiId ? 'Không có học phần.' : 'Chọn môn thi.'}
-              subtitle={!selectedMonThiId ? 'Chọn một môn thi ở trên để xem học phần' : undefined}
-            />
-          }
-          renderItem={({ item }) => {
+        {loadingHocPhan ? (
+          <ActivityIndicator style={styles.loader} color={colors.primary} />
+        ) : hocPhans.length === 0 ? (
+          <EmptyState
+            icon="folder-open-outline"
+            title={selectedMonThiId ? 'Không có học phần.' : 'Chọn môn thi.'}
+            subtitle={!selectedMonThiId ? 'Chọn một môn thi ở trên để xem học phần' : undefined}
+          />
+        ) : (
+          hocPhans.map((item) => {
             const subjectColor = selectedMonThiId ? getSubjectColor(selectedMonThiId) : colors.primary;
             return (
-              <TouchableOpacity 
-                style={styles.topicCard} 
-                onPress={() => navigation.navigate('TopicDetail', { id: item.id })} 
+              <TouchableOpacity
+                key={String(item.id)}
+                style={styles.topicCard}
+                onPress={() => navigation.navigate('TopicDetail', { id: item.id })}
                 activeOpacity={0.7}
               >
                 <View style={[styles.topicIcon, { backgroundColor: subjectColor + '18' }]}>
@@ -130,9 +153,9 @@ export default function TopicsScreen({ navigation }) {
                 <Ionicons name="chevron-forward" size={iconSizes.md} color={colors.textMuted} />
               </TouchableOpacity>
             );
-          }}
-        />
-      )}
+          })
+        )}
+      </ScrollView>
     </View>
   );
 }
@@ -140,16 +163,20 @@ export default function TopicsScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: spacing.lg, backgroundColor: colors.background },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
-  title: { ...typography.titleSmall, marginBottom: spacing.xs, color: colors.text },
-  subtitle: { ...typography.bodySmall, color: colors.textSecondary, marginBottom: spacing.sm, flex: 1 },
-  chipList: { paddingVertical: spacing.sm, gap: spacing.sm },
+  title: { fontSize: 17, fontWeight: '700', marginBottom: spacing.xs, color: colors.text },
+  subtitle: { ...typography.bodySmall, color: colors.textSecondary, marginBottom: spacing.xs, flex: 1 },
+  chipSectionLabel: { ...typography.bodySmall, color: colors.textSecondary, marginBottom: spacing.xs },
+  chipList: { paddingBottom: spacing.xs, gap: spacing.sm },
+  scroll: { flex: 1 },
+  scrollContent: { paddingBottom: spacing.xl },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    minHeight: 40,
-    justifyContent: 'center',
+    minHeight: minTouchTargetSize,
+    height: minTouchTargetSize + 8,
     backgroundColor: colors.surface,
     borderRadius: borderRadius.full,
     marginRight: spacing.sm,
@@ -164,8 +191,8 @@ const styles = StyleSheet.create({
   listHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: spacing.lg,
-    marginBottom: spacing.sm,
+    marginTop: spacing.xs,
+    marginBottom: spacing.xs,
   },
   countBadge: {
     ...typography.caption,
@@ -182,34 +209,35 @@ const styles = StyleSheet.create({
   topicCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: spacing.md,
-    minHeight: minTouchTargetSize + 16,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    minHeight: 40,
     backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    marginBottom: spacing.sm,
+    borderRadius: borderRadius.sm,
+    marginBottom: spacing.xs,
     borderWidth: 1,
     borderColor: colors.border,
     ...shadows.cardSm,
   },
   topicIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: borderRadius.md,
+    width: 36,
+    height: 36,
+    borderRadius: borderRadius.sm,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: spacing.md,
+    marginRight: spacing.sm,
   },
   topicContent: {
     flex: 1,
   },
-  topicTitle: { ...typography.body, color: colors.text, fontWeight: '600', marginBottom: 4 },
+  topicTitle: { ...typography.bodySmall, color: colors.text, fontWeight: '600', marginBottom: 2 },
   topicMeta: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
   topicMetaText: {
-    ...typography.caption,
+    ...typography.captionSmall,
     color: colors.textMuted,
   },
 });

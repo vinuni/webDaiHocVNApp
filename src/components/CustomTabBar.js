@@ -26,10 +26,11 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
   const getIconName = (routeName, isFocused) => {
     const iconMap = {
       Home: isFocused ? 'home' : 'home-outline',
+      MonThi: isFocused ? 'school' : 'school-outline',
       Topics: isFocused ? 'book' : 'book-outline',
       HoiAi: isFocused ? 'sparkles' : 'sparkles-outline',
       Gamification: isFocused ? 'trophy' : 'trophy-outline',
-      Profile: isFocused ? 'person' : 'person-outline',
+      Menu: isFocused ? 'menu' : 'menu-outline',
     };
     return iconMap[routeName] || 'ellipse-outline';
   };

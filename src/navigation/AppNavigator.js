@@ -3,15 +3,10 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAuth } from '../auth/AuthContext';
-import { View, ActivityIndicator, Text, Image, Platform } from 'react-native';
+import { View, ActivityIndicator, Text, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, iconSizes } from '../theme';
-
-const logo = require('../../assets/logo.png');
-
-function HeaderLogo() {
-  return <Image source={logo} style={{ width: 120, height: 32 }} resizeMode="contain" />;
-}
+import { HeaderLeft, HeaderRight } from '../components/AppHeader';
 
 const headerOptions = {
   headerStyle: { backgroundColor: colors.surface },
@@ -37,6 +32,8 @@ import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import SearchScreen from '../screens/SearchScreen';
 import StudyMaterialsScreen from '../screens/StudyMaterialsScreen';
 import CommentsScreen from '../screens/CommentsScreen';
+import MonThiScreen from '../screens/MonThiScreen';
+import MenuScreen from '../screens/MenuScreen';
 import CustomTabBar from '../components/CustomTabBar';
 
 const Stack = createNativeStackNavigator();
@@ -68,14 +65,17 @@ function MainTabs() {
       screenOptions={{
         ...headerOptions,
         headerShown: true,
-        headerTitle: () => <HeaderLogo />,
+        headerTitle: () => null,
+        headerLeft: () => <HeaderLeft />,
+        headerRight: () => <HeaderRight />,
       }}
     >
       <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Trang chủ', tabBarLabel: 'Trang chủ' }} />
+      <Tab.Screen name="MonThi" component={MonThiScreen} options={{ title: 'Môn thi', tabBarLabel: 'Môn thi' }} />
       <Tab.Screen name="Topics" component={TopicsScreen} options={{ title: 'Học phần', tabBarLabel: 'Học phần' }} />
       <Tab.Screen name="HoiAi" component={HoiAiStack} options={{ title: 'Hỏi AI', tabBarLabel: 'Hỏi AI', headerShown: false }} />
       <Tab.Screen name="Gamification" component={GamificationScreen} options={{ title: 'Thành tích', tabBarLabel: 'Thành tích' }} />
-      <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Tài khoản', tabBarLabel: 'Tài khoản' }} />
+      <Tab.Screen name="Menu" component={MenuScreen} options={{ title: 'Menu', tabBarLabel: 'Menu' }} />
     </Tab.Navigator>
   );
 }
@@ -92,6 +92,7 @@ function MainStack() {
       <Stack.Screen name="Search" component={SearchScreen} options={{ title: 'Tìm kiếm' }} />
       <Stack.Screen name="Scoreboard" component={ScoreboardScreen} options={{ title: 'Bảng điểm' }} />
       <Stack.Screen name="Limits" component={LimitsScreen} options={{ title: 'Giới hạn' }} />
+      <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Tài khoản' }} />
     </Stack.Navigator>
   );
 }
