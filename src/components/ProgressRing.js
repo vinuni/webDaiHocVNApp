@@ -14,6 +14,7 @@ import { colors, typography } from '../theme';
  * @param {string} props.backgroundColor - Color of the background ring (default: colors.border)
  * @param {string} props.label - Label text below the value (optional)
  * @param {boolean} props.showPercentage - Show % sign (default: true)
+ * @param {boolean} props.hideCenterText - When true, do not render center value/label (e.g. when parent overlays custom content)
  */
 export default function ProgressRing({
   progress = 0,
@@ -24,6 +25,7 @@ export default function ProgressRing({
   backgroundColor = colors.border,
   label,
   showPercentage = true,
+  hideCenterText = false,
 }) {
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
@@ -56,13 +58,15 @@ export default function ProgressRing({
           transform={`rotate(-90 ${size / 2} ${size / 2})`}
         />
       </Svg>
-      <View style={styles.textContainer}>
-        <Text style={[styles.value, { fontSize: size * 0.25 }]}>
-          {Math.round(progress)}
-          {showPercentage && max === 100 && '%'}
-        </Text>
-        {label && <Text style={[styles.label, { fontSize: size * 0.1 }]}>{label}</Text>}
-      </View>
+      {!hideCenterText && (
+        <View style={styles.textContainer}>
+          <Text style={[styles.value, { fontSize: size * 0.25 }]}>
+            {Math.round(progress)}
+            {showPercentage && max === 100 && '%'}
+          </Text>
+          {label && <Text style={[styles.label, { fontSize: size * 0.1 }]}>{label}</Text>}
+        </View>
+      )}
     </View>
   );
 }

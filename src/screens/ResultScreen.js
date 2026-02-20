@@ -80,12 +80,12 @@ export default function ResultScreen({ route, navigation }) {
                   color={isPassed ? colors.success : colors.warning}
                   backgroundColor={isPassed ? colors.successTint : colors.warningTint}
                   showPercentage={false}
+                  hideCenterText
                 />
                 <View style={styles.scoreCircleCenter} pointerEvents="none">
                   <Text style={[styles.scoreValue, { color: isPassed ? colors.success : colors.warning }]}>
                     {score.toFixed(1)}
                   </Text>
-                  <Text style={styles.scoreLabel}>điểm</Text>
                 </View>
               </View>
               
