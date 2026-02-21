@@ -55,6 +55,8 @@ First run of `eas build:configure` creates `eas.json`. Then you can use `eas bui
 
 #### Option 2: Local build (Android)
 
+Requires **Android SDK** installed and `ANDROID_HOME` set (see below).
+
 ```bash
 npx expo prebuild
 cd android
@@ -62,6 +64,28 @@ cd android
 ```
 
 APK path: `android/app/build/outputs/apk/release/`.
+
+### Android SDK setup (Windows, for local run/build)
+
+1. **Install Android Studio** (easiest): https://developer.android.com/studio  
+   - During setup, ensure **Android SDK** is installed (default).
+
+2. **Set environment variables** (replace path if your SDK is elsewhere):
+   - `ANDROID_HOME` = `C:\Users\<You>\AppData\Local\Android\Sdk`
+   - Add to **Path**: `%ANDROID_HOME%\platform-tools` and `%ANDROID_HOME%\emulator`
+
+   **PowerShell (current user):**
+   ```powershell
+   [System.Environment]::SetEnvironmentVariable('ANDROID_HOME', "$env:LOCALAPPDATA\Android\Sdk", 'User')
+   $path = [System.Environment]::GetEnvironmentVariable('Path', 'User')
+   $path += ";$env:LOCALAPPDATA\Android\Sdk\platform-tools;$env:LOCALAPPDATA\Android\Sdk\emulator"
+   [System.Environment]::SetEnvironmentVariable('Path', $path, 'User')
+   ```
+   Then **close and reopen** PowerShell/terminal.
+
+3. **Verify:** `adb version` should run without error.
+
+4. **Run app:** `npx expo run:android` (or start with `npx expo start` and press **a** with an emulator/device connected).
 
 ## Summary
 
