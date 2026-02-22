@@ -37,8 +37,9 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
   };
 
   const horizontalPadding = Math.max(Platform.OS === 'ios' ? 20 : 16, insets.left, insets.right);
+  const bottomPadding = Math.max(4, insets.bottom);
   return (
-    <View style={[styles.tabBar, { paddingHorizontal: horizontalPadding }]}>
+    <View style={[styles.tabBar, { paddingHorizontal: horizontalPadding, paddingBottom: bottomPadding }]}>
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
         const label =
@@ -127,7 +128,7 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
     paddingTop: 4,
     paddingBottom: Platform.OS === 'ios' ? spacing.sm : 4,
-    height: Platform.OS === 'ios' ? 56 : 52,
+    minHeight: Platform.OS === 'ios' ? 56 : 52,
   },
   tab: {
     flex: 1,

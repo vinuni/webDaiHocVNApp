@@ -47,7 +47,11 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = async (email, password) => {
-    const data = await apiClient.post('/api/v1/login', { email, password });
+    const payload = { email, password };
+    if (__DEV__) {
+      console.log('[AuthContext] login payload:', payload);
+    }
+    const data = await apiClient.post('/api/v1/login', payload);
     const t = data.token;
     const u = data.user;
     await authStorage.setToken(t);
@@ -57,12 +61,16 @@ export function AuthProvider({ children }) {
   };
 
   const register = async (name, email, password, password_confirmation) => {
-    const data = await apiClient.post('/api/v1/register', {
+    const payload = {
       name,
       email,
       password,
       password_confirmation,
-    });
+    };
+    if (__DEV__) {
+      console.log('[AuthContext] register payload:', payload);
+    }
+    const data = await apiClient.post('/api/v1/register', payload);
     const t = data.token;
     const u = data.user;
     await authStorage.setToken(t);

@@ -16,6 +16,7 @@ import { useAuth } from '../auth/AuthContext';
 import { apiClient } from '../api/client';
 import ProgressRing from '../components/ProgressRing';
 import { colors, spacing, borderRadius, typography, minTouchTargetSize, gradients, iconSizes, shadows } from '../theme';
+import { useRequireAuth } from '../hooks/useRequireAuth';
 
 let ImagePicker = null;
 try {
@@ -23,11 +24,21 @@ try {
 } catch {}
 
 export default function ProfileScreen({ navigation }) {
+  const isAuthenticated = useRequireAuth();
   const { user: authUser, logout, refreshUser } = useAuth();
   const [user, setUser] = useState(authUser);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+
+  if (!isAuthenticated) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={{ marginTop: spacing.sm, color: colors.textSecondary }}>Đang chuyển đến đăng nhập...</Text>
+      </View>
+    );
+  }
   const [gamification, setGamification] = useState(null);
 
   const userData = user?.user ?? user;

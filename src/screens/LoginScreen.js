@@ -72,6 +72,25 @@ export default function LoginScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const getLoginErrorMessage = (e) => {
+    const isNetworkError =
+      e?.message === 'Network request failed' ||
+      (typeof e?.message === 'string' && (e.message.includes('fetch') || e.message.includes('Failed to load')));
+    if (isNetworkError) {
+      return 'Không kết nối được máy chủ. Kiểm tra kết nối mạng và đảm bảo backend đang chạy.';
+    }
+    const body = e?.body;
+    if (body?.errors && typeof body.errors === 'object') {
+      const emailMsg = Array.isArray(body.errors.email) ? body.errors.email[0] : null;
+      const passwordMsg = Array.isArray(body.errors.password) ? body.errors.password[0] : null;
+      if (emailMsg) return emailMsg;
+      if (passwordMsg) return passwordMsg;
+    }
+    if (body?.message && typeof body.message === 'string') return body.message;
+    if (e?.message && typeof e.message === 'string' && !e.message.startsWith('HTTP ')) return e.message;
+    return 'Email hoặc mật khẩu không đúng. Vui lòng thử lại.';
+  };
+
   const handleLogin = async () => {
     if (!email.trim() || !password) {
       Alert.alert('Lỗi', 'Vui lòng nhập email và mật khẩu.');
@@ -81,14 +100,7 @@ export default function LoginScreen({ navigation }) {
     try {
       await login(email.trim(), password);
     } catch (e) {
-      const isNetworkError =
-        e?.message === 'Network request failed' ||
-        (typeof e?.message === 'string' && (e.message.includes('fetch') || e.message.includes('Failed to load')));
-      const msg = e?.status === 422
-        ? 'Email hoặc mật khẩu không đúng.'
-        : isNetworkError
-          ? 'Không kết nối được máy chủ. Kiểm tra EXPO_PUBLIC_API_BASE_URL trong .env và đảm bảo backend đang chạy (xem README / docs).'
-          : (e?.body?.message || e?.message) || 'Đăng nhập thất bại.';
+      const msg = getLoginErrorMessage(e);
       Alert.alert('Đăng nhập thất bại', msg);
     } finally {
       setLoading(false);
@@ -98,12 +110,14 @@ export default function LoginScreen({ navigation }) {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior="padding"
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 44 : 20}
     >
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
+        bounces={false}
       >
         {/* Gradient Header */}
         <LinearGradient
@@ -199,6 +213,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: 80,
   },
   header: {
     paddingTop: Platform.OS === 'ios' ? spacing.xxl + 20 : spacing.xl,

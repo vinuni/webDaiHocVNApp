@@ -126,12 +126,13 @@ export default function CommentsScreen({ route }) {
   }
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={100}>
+    <KeyboardAvoidingView style={styles.container} behavior="padding" keyboardVerticalOffset={Platform.OS === 'ios' ? 44 : 20}>
       <FlatList
         data={items}
         renderItem={renderComment}
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={styles.listContent}
+        keyboardShouldPersistTaps="handled"
         ListEmptyComponent={
           loading ? (
             <View style={styles.centered}><ActivityIndicator size="large" color={colors.primary} /></View>

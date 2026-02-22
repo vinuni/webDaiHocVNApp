@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiClient } from '../api/client';
 import MathText from '../components/MathText';
 import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize, gradients, iconSizes } from '../theme';
+import { useRequireAuth } from '../hooks/useRequireAuth';
 
 function ExamProgressHeader({ answers, questionsLength, minutesLeft, tendethi, deThiTendethi }) {
   const answeredCount = Object.keys(answers).length;
@@ -37,6 +38,7 @@ function ExamProgressHeader({ answers, questionsLength, minutesLeft, tendethi, d
 
 export default function ExamTakeScreen({ route, navigation }) {
   const insets = useSafeAreaInsets();
+  const isAuthenticated = useRequireAuth();
   const { deThiId, tendethi } = route.params || {};
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -48,6 +50,15 @@ export default function ExamTakeScreen({ route, navigation }) {
   const [timerReady, setTimerReady] = useState(false);
   // Font size for question/options: 0 = 18, 1 = 20, 2 = 22, 3 = 24
   const [fontSizeLevel, setFontSizeLevel] = useState(1);
+
+  if (!isAuthenticated) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={styles.loadingText}>Đang chuyển đến đăng nhập...</Text>
+      </View>
+    );
+  }
   const questionFontSize = 18 + fontSizeLevel * 2;
 
   useEffect(() => {

@@ -9,6 +9,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { apiClient } from '../api/client';
 import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize } from '../theme';
@@ -56,34 +57,43 @@ export default function ForgotPasswordScreen({ navigation }) {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior="padding"
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 44 : 20}
     >
-      <View style={styles.card}>
-        <Text style={styles.title}>Quên mật khẩu</Text>
-        <Text style={styles.hint}>Nhập email đăng ký để nhận link đặt lại mật khẩu.</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor={colors.textMuted}
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          editable={!loading}
-        />
-        <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={loading} activeOpacity={0.8}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Gửi link đặt lại mật khẩu</Text>}
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.link} onPress={() => navigation.navigate('Login')} disabled={loading}>
-          <Text style={styles.linkText}>Quay lại đăng nhập</Text>
-        </TouchableOpacity>
-      </View>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
+        <View style={styles.card}>
+          <Text style={styles.title}>Quên mật khẩu</Text>
+          <Text style={styles.hint}>Nhập email đăng ký để nhận link đặt lại mật khẩu.</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            placeholderTextColor={colors.textMuted}
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            editable={!loading}
+          />
+          <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={loading} activeOpacity={0.8}>
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Gửi link đặt lại mật khẩu</Text>}
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.link} onPress={() => navigation.navigate('Login')} disabled={loading}>
+            <Text style={styles.linkText}>Quay lại đăng nhập</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: spacing.lg, backgroundColor: colors.background },
+  container: { flex: 1, backgroundColor: colors.background },
+  scrollContent: { flexGrow: 1, padding: spacing.lg, paddingBottom: 80 },
   card: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,

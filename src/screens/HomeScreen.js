@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,7 +18,7 @@ import { colors, spacing, borderRadius, typography, minTouchTargetSize, gradient
 
 export default function HomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -35,12 +36,11 @@ export default function HomeScreen({ navigation }) {
       const normalized = {
         mon_this: Array.isArray(raw?.mon_this) ? raw.mon_this : [],
         study_materials_summary: Array.isArray(raw?.study_materials_summary) ? raw.study_materials_summary : [],
-        leaderboard: Array.isArray(raw?.leaderboard) ? raw.leaderboard : [],
       };
       setData(normalized);
       setLoading(false);
     } catch (err) {
-      setData({ mon_this: [], study_materials_summary: [], leaderboard: [] });
+      setData({ mon_this: [], study_materials_summary: [] });
       setLoading(false);
     }
   };
@@ -65,7 +65,6 @@ export default function HomeScreen({ navigation }) {
 
   const mon_this = data?.mon_this || [];
   const studyMaterialsSummary = data?.study_materials_summary || [];
-  const leaderboard = data?.leaderboard || [];
   const selected = selectedMonThiId ? mon_this.find((m) => m.id === selectedMonThiId) : null;
   const de_this = selected?.de_this || [];
 
@@ -115,7 +114,23 @@ export default function HomeScreen({ navigation }) {
             <View style={styles.headerActions}>
               <TouchableOpacity 
                 style={styles.headerButton} 
-                onPress={() => navigation.navigate('HoiAi')} 
+                onPress={() => {
+                  if (!isAuthenticated) {
+                    Alert.alert(
+                      'Yêu cầu đăng nhập',
+                      'Bạn cần đăng nhập để sử dụng tính năng Hỏi AI.',
+                      [
+                        { text: 'Hủy', style: 'cancel' },
+                        { 
+                          text: 'Đăng nhập', 
+                          onPress: () => navigation.navigate('Auth', { screen: 'Login' })
+                        }
+                      ]
+                    );
+                    return;
+                  }
+                  navigation.navigate('HoiAi');
+                }} 
                 activeOpacity={0.8}
               >
                 <Ionicons name="sparkles" size={iconSizes.md} color="#fff" />
@@ -172,7 +187,23 @@ export default function HomeScreen({ navigation }) {
                   <TouchableOpacity
                     key={`sm-${sm.mon_thi_id}-${idx}`}
                     style={[styles.studyMaterialCard, { borderLeftColor: getSubjectColor(sm.tenmonthi) }]}
-                    onPress={() => navigation.navigate('Topics', { screen: 'TopicsList', params: { monThiId: sm.mon_thi_id } })}
+                    onPress={() => {
+                      if (!isAuthenticated) {
+                        Alert.alert(
+                          'Yêu cầu đăng nhập',
+                          'Bạn cần đăng nhập để truy cập tài liệu học tập.',
+                          [
+                            { text: 'Hủy', style: 'cancel' },
+                            { 
+                              text: 'Đăng nhập', 
+                              onPress: () => navigation.navigate('Auth', { screen: 'Login' })
+                            }
+                          ]
+                        );
+                        return;
+                      }
+                      navigation.navigate('Topics', { screen: 'TopicsList', params: { monThiId: sm.mon_thi_id } });
+                    }}
                     activeOpacity={0.8}
                   >
                     <View style={styles.studyMaterialContent}>
@@ -186,47 +217,6 @@ export default function HomeScreen({ navigation }) {
                 ))}
               </View>
             )}
-          </View>
-        )}
-
-        {/* Leaderboard Widget - tap header to open Profile (Thành tích merged there) */}
-        {leaderboard.length > 0 && (
-          <View style={styles.leaderboardSection}>
-            <TouchableOpacity
-              style={styles.sectionHeader}
-              onPress={() => navigation.getParent()?.navigate('Profile')}
-              activeOpacity={0.8}
-            >
-              <View style={styles.sectionHeaderLeft}>
-                <Ionicons name="trophy" size={iconSizes.md} color={colors.warning} />
-                <Text style={styles.sectionTitle}>Bảng Xếp Hạng</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={iconSizes.sm} color={colors.textMuted} />
-            </TouchableOpacity>
-            <View style={styles.leaderboardCard}>
-              {leaderboard.slice(0, 5).map((entry, idx) => {
-                const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : null;
-                return (
-                  <View key={idx} style={[styles.leaderboardRow, idx > 0 && styles.leaderboardRowBorder]}>
-                    <View style={styles.leaderboardLeft}>
-                      {medal ? (
-                        <Text style={styles.leaderboardMedal}>{medal}</Text>
-                      ) : (
-                        <Text style={styles.leaderboardRank}>{entry.rank}</Text>
-                      )}
-                      <Text style={styles.leaderboardName} numberOfLines={1}>{entry.name}</Text>
-                    </View>
-                    <View style={styles.leaderboardRight}>
-                      <View style={styles.leaderboardScore}>
-                        <Ionicons name="star" size={12} color={colors.warning} />
-                        <Text style={styles.leaderboardScoreText}>{entry.total_points}</Text>
-                      </View>
-                      <Text style={styles.leaderboardLevel}>Cấp {entry.level}</Text>
-                    </View>
-                  </View>
-                );
-              })}
-            </View>
           </View>
         )}
 
@@ -276,6 +266,20 @@ export default function HomeScreen({ navigation }) {
             const examColor = item.is_full ? colors.success : colors.primary;
             const attempted = item.user_attempted === true;
             const onPress = () => {
+              if (!isAuthenticated) {
+                Alert.alert(
+                  'Yêu cầu đăng nhập',
+                  'Bạn cần đăng nhập để làm bài thi. Đăng ký miễn phí ngay!',
+                  [
+                    { text: 'Hủy', style: 'cancel' },
+                    { 
+                      text: 'Đăng nhập', 
+                      onPress: () => navigation.navigate('Auth', { screen: 'Login' })
+                    }
+                  ]
+                );
+                return;
+              }
               if (attempted) {
                 navigation.navigate('Result', {
                   deThiId: item.id,
@@ -330,7 +334,16 @@ export default function HomeScreen({ navigation }) {
                     </Text>
                   </View>
                 </View>
-                <Ionicons name="chevron-forward" size={iconSizes.md} color={colors.textMuted} />
+                <View style={styles.examAction}>
+                  {attempted ? (
+                    <View style={styles.resultButton}>
+                      <Ionicons name="checkmark-circle" size={iconSizes.sm} color={colors.success} />
+                      <Text style={styles.resultButtonText}>Kết Quả</Text>
+                    </View>
+                  ) : (
+                    <Ionicons name="chevron-forward" size={iconSizes.md} color={colors.textMuted} />
+                  )}
+                </View>
               </TouchableOpacity>
             );
           })
@@ -476,75 +489,6 @@ const styles = StyleSheet.create({
     ...typography.captionSmall,
     color: colors.textMuted,
   },
-  leaderboardSection: {
-    marginBottom: spacing.lg,
-  },
-  leaderboardCard: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    padding: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...shadows.card,
-  },
-  leaderboardRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.xs,
-  },
-  leaderboardRowBorder: {
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    marginTop: spacing.xs,
-    paddingTop: spacing.xs,
-  },
-  leaderboardLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    flex: 1,
-  },
-  leaderboardMedal: {
-    fontSize: 20,
-    width: 28,
-  },
-  leaderboardRank: {
-    ...typography.caption,
-    color: colors.textMuted,
-    fontWeight: '700',
-    width: 28,
-    textAlign: 'center',
-  },
-  leaderboardName: {
-    ...typography.bodySmall,
-    color: colors.text,
-    fontWeight: '600',
-    flex: 1,
-  },
-  leaderboardRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  leaderboardScore: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    backgroundColor: colors.warningTint,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 2,
-    borderRadius: borderRadius.xs,
-  },
-  leaderboardScoreText: {
-    ...typography.captionSmall,
-    color: colors.warning,
-    fontWeight: '700',
-  },
-  leaderboardLevel: {
-    ...typography.captionSmall,
-    color: colors.textSecondary,
-  },
   sectionTitle: { 
     ...typography.subtitle, 
     color: colors.text, 
@@ -625,6 +569,23 @@ const styles = StyleSheet.create({
   examContent: {
     flex: 1,
     marginLeft: spacing.sm,
+  },
+  examAction: {
+    marginLeft: spacing.sm,
+  },
+  resultButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.success + '15',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+  },
+  resultButtonText: {
+    ...typography.bodySmall,
+    color: colors.success,
+    fontWeight: '600',
+    marginLeft: spacing.xs,
   },
   examTitleRow: {
     flexDirection: 'row',

@@ -205,7 +205,16 @@ export default function MonThiScreen({ navigation }) {
             </Text>
           </View>
         </View>
-        <Ionicons name="chevron-forward" size={iconSizes.md} color={colors.textMuted} />
+        <View style={styles.examAction}>
+          {attempted ? (
+            <View style={styles.resultButton}>
+              <Ionicons name="checkmark-circle" size={iconSizes.sm} color={colors.success} />
+              <Text style={styles.resultButtonText}>Kết Quả</Text>
+            </View>
+          ) : (
+            <Ionicons name="chevron-forward" size={iconSizes.md} color={colors.textMuted} />
+          )}
+        </View>
       </TouchableOpacity>
     );
   };
@@ -469,6 +478,23 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   examContent: { flex: 1, marginLeft: spacing.sm },
+  examAction: {
+    marginLeft: spacing.sm,
+  },
+  resultButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.success + '15',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+  },
+  resultButtonText: {
+    ...typography.bodySmall,
+    color: colors.success,
+    fontWeight: '600',
+    marginLeft: spacing.xs,
+  },
   examTitleRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',

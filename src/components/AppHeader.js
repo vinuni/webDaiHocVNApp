@@ -23,11 +23,13 @@ export function HeaderLeft() {
 }
 
 /**
- * Right side: search icon + account block (avatar, name, email, level/XP). Tapping account navigates to Profile.
+ * Right side: search icon + account block (avatar, name, email, level/XP) for authenticated users.
+ * For guests: shows Login button.
+ * Tapping account navigates to Profile.
  */
 export function HeaderRight() {
   const navigation = useNavigation();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [gamification, setGamification] = useState(null);
 
   const userData = user?.user ?? user;
@@ -35,6 +37,7 @@ export function HeaderRight() {
   const avatarUri = userData?.profile?.avatar ?? null;
 
   useEffect(() => {
+    if (!isAuthenticated) return;
     let mounted = true;
     apiClient
       .get('/api/v1/gamification')
@@ -43,11 +46,32 @@ export function HeaderRight() {
       })
       .catch(() => {});
     return () => { mounted = false; };
-  }, []);
+  }, [isAuthenticated]);
 
   const level = gamification?.level ?? '—';
   const xp = gamification?.xp != null ? gamification.xp : '—';
   const levelXpText = typeof xp === 'number' ? `Cấp ${level} · ${xp.toLocaleString()} XP` : `Cấp ${level} · ${xp} XP`;
+
+  if (!isAuthenticated) {
+    return (
+      <View style={styles.right}>
+        <TouchableOpacity 
+          style={styles.iconBtn} 
+          onPress={() => navigation.getParent()?.navigate('Search')} 
+          activeOpacity={0.7}
+        >
+          <Ionicons name="search" size={iconSizes.md} color={colors.text} />
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.loginBtn} 
+          onPress={() => navigation.navigate('Auth', { screen: 'Login' })} 
+          activeOpacity={0.7}
+        >
+          <Text style={styles.loginBtnText}>Đăng nhập</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   const goProfile = () => {
     const root = navigation.getParent?.() ?? navigation;
@@ -96,7 +120,30 @@ const styles = StyleSheet.create({
   right: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: spacing.sm,
     paddingVertical: spacing.sm,
+  },
+  iconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loginBtn: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    backgroundColor: colors.primary,
+    borderRadius: 20,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loginBtnText: {
+    ...typography.bodySmall,
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 13,
   },
   accountBlock: {
     flexDirection: 'row',

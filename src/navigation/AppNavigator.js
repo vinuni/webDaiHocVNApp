@@ -109,10 +109,12 @@ export default function AppNavigator() {
     );
   }
 
-  // Guests see only AuthStack (Login/Register/ForgotPassword). All app features require auth.
   return (
     <NavigationContainer>
-      {isAuthenticated ? <MainStack /> : <AuthStack />}
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Main" component={MainStack} />
+        <Stack.Screen name="Auth" component={AuthStack} />
+      </Stack.Navigator>
       {Platform.OS === 'web' && typeof document !== 'undefined' ? <BlurWhenTabHidden /> : null}
     </NavigationContainer>
   );

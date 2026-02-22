@@ -11,7 +11,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:api": "node scripts/test-home-api.js",
-    "test:home-api": "node scripts/test-home-api.js"
+    "test:home-api": "node scripts/test-home-api.js",
+    "test:api-get": "node scripts/test-get-api.js"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.2.0",

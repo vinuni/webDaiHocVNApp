@@ -9,11 +9,14 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { apiClient } from '../api/client';
 import MathText from '../components/MathText';
 import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize, iconSizes } from '../theme';
+import { useAuth } from '../auth/AuthContext';
 
 let ImagePicker = null;
 try {
@@ -23,6 +26,7 @@ try {
 }
 
 export default function HoiAiAskScreen({ navigation }) {
+  const { isAuthenticated } = useAuth();
   const [question, setQuestion] = useState('');
   const [photo, setPhoto] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -73,6 +77,11 @@ export default function HoiAiAskScreen({ navigation }) {
   const removePhoto = () => setPhoto(null);
 
   const submit = async () => {
+    if (!isAuthenticated) {
+      navigation.navigate('Auth', { screen: 'Login' });
+      return;
+    }
+    
     const hasText = question.trim().length > 0;
     if (!hasText && !photo) {
       setError('Vui lòng nhập câu hỏi hoặc đính kèm ảnh.');
@@ -110,6 +119,11 @@ export default function HoiAiAskScreen({ navigation }) {
   };
 
   return (
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 44 : 20}
+    >
     <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
       <View style={styles.card}>
         <View style={styles.cardHeader}>
@@ -252,13 +266,14 @@ export default function HoiAiAskScreen({ navigation }) {
         <Text style={styles.historyLinkText}>Xem lịch sử hỏi đáp</Text>
         <Ionicons name="chevron-forward" size={iconSizes.sm} color={colors.primary} />
       </TouchableOpacity>
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  content: { padding: spacing.lg, paddingBottom: 80 },
   card: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,

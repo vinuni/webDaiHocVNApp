@@ -9,6 +9,8 @@ import {
   ActivityIndicator,
   RefreshControl,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { apiClient } from '../api/client';
 import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize } from '../theme';
@@ -153,29 +155,36 @@ export default function SearchScreen() {
         </View>
       )}
 
-      <FlatList
-        data={results}
-        renderItem={renderItem}
-        keyExtractor={(item) => String(item.id)}
-        contentContainerStyle={styles.listContent}
-        ListEmptyComponent={
-          searching && results.length === 0 ? (
-            <View style={styles.centered}><ActivityIndicator size="large" color={colors.primary} /></View>
-          ) : query.trim() && !searching ? (
-            <Text style={styles.empty}>Nhập từ khóa và nhấn Tìm để tìm câu hỏi.</Text>
-          ) : null
-        }
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} />}
-        onEndReached={onEndReached}
-        onEndReachedThreshold={0.3}
-        ListFooterComponent={searching && results.length > 0 ? <View style={styles.footer}><ActivityIndicator size="small" color={colors.primary} /></View> : null}
-      />
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.flex}
+      >
+        <FlatList
+          data={results}
+          renderItem={renderItem}
+          keyExtractor={(item) => String(item.id)}
+          contentContainerStyle={styles.listContent}
+          keyboardShouldPersistTaps="handled"
+          ListEmptyComponent={
+            searching && results.length === 0 ? (
+              <View style={styles.centered}><ActivityIndicator size="large" color={colors.primary} /></View>
+            ) : query.trim() && !searching ? (
+              <Text style={styles.empty}>Nhập từ khóa và nhấn Tìm để tìm câu hỏi.</Text>
+            ) : null
+          }
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} />}
+          onEndReached={onEndReached}
+          onEndReachedThreshold={0.3}
+          ListFooterComponent={searching && results.length > 0 ? <View style={styles.footer}><ActivityIndicator size="small" color={colors.primary} /></View> : null}
+        />
+      </KeyboardAvoidingView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+  flex: { flex: 1 },
   searchRow: { flexDirection: 'row', padding: spacing.md, gap: spacing.sm, alignItems: 'center' },
   input: {
     flex: 1,
