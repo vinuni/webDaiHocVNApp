@@ -33,6 +33,7 @@ export default function MonThiScreen({ navigation }) {
   const [fullTotal, setFullTotal] = useState(0);
   const [loadingMoreNhanh, setLoadingMoreNhanh] = useState(false);
   const [loadingMoreFull, setLoadingMoreFull] = useState(false);
+  const [taiLieuExpanded, setTaiLieuExpanded] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -81,6 +82,10 @@ export default function MonThiScreen({ navigation }) {
   useEffect(() => {
     loadDetail(selectedMonThiId);
   }, [selectedMonThiId, loadDetail]);
+
+  useEffect(() => {
+    setTaiLieuExpanded(false);
+  }, [selectedMonThiId]);
 
   const selectMonThi = (id) => {
     const next = id === selectedMonThiId ? null : id;
@@ -172,18 +177,6 @@ export default function MonThiScreen({ navigation }) {
             <Text style={styles.examTitle} numberOfLines={2}>
               {item.tendethi}
             </Text>
-            {attempted && (
-              <View style={styles.attemptedBadge}>
-                <Ionicons name="checkmark-circle" size={10} color={colors.success} />
-                <Text style={styles.attemptedBadgeText}>Đã làm</Text>
-              </View>
-            )}
-            {item.is_new && !attempted && (
-              <View style={styles.newBadge}>
-                <Ionicons name="flash" size={10} color={colors.warning} />
-                <Text style={styles.newBadgeText}>MỚI</Text>
-              </View>
-            )}
           </View>
           <View style={styles.examMeta}>
             <View style={styles.metaItem}>
@@ -199,10 +192,22 @@ export default function MonThiScreen({ navigation }) {
               <Text style={styles.metaText}>{(item.bestscore ?? item.user_diem ?? 0).toFixed(1)}</Text>
             </View>
           </View>
-          <View style={styles.examTypeIndicator}>
-            <Text style={[styles.examTypeText, { color: examColor }]}>
-              {item.is_full ? '📝 Đề Full' : '⚡ Đề Nhanh'}
-            </Text>
+          <View style={styles.examTypeRow}>
+            <View style={[styles.examTypeChip, { backgroundColor: examColor + '18' }]}>
+              <Text style={[styles.examTypeText, { color: examColor }]}>
+                {item.is_full ? '📝 Đề Full' : '⚡ Đề Nhanh'}
+              </Text>
+            </View>
+            {item.is_new && !attempted && (
+              <View style={styles.newChip}>
+                <Text style={styles.newChipText}>MỚI</Text>
+              </View>
+            )}
+            {attempted && (
+              <View style={styles.daLamChip}>
+                <Text style={styles.daLamChipText}>Đã làm</Text>
+              </View>
+            )}
           </View>
         </View>
         <View style={styles.examAction}>
@@ -289,7 +294,7 @@ export default function MonThiScreen({ navigation }) {
                 <Ionicons name="book" size={iconSizes.md} color={colors.success} />
                 <Text style={styles.sectionTitle}>Tài liệu học tập</Text>
               </View>
-              {hocPhansWithMaterials.map((hp) => (
+              {(taiLieuExpanded ? hocPhansWithMaterials : hocPhansWithMaterials.slice(0, 3)).map((hp) => (
                 <TouchableOpacity
                   key={'sm-' + hp.id}
                   style={[styles.studyMaterialCard, { borderLeftColor: colors.success }]}
@@ -306,6 +311,19 @@ export default function MonThiScreen({ navigation }) {
                   <Ionicons name="chevron-forward" size={iconSizes.sm} color={colors.textMuted} />
                 </TouchableOpacity>
               ))}
+              {hocPhansWithMaterials.length > 3 && (
+                <TouchableOpacity
+                  style={styles.loadMoreBtn}
+                  onPress={() => setTaiLieuExpanded((prev) => !prev)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.loadMoreText}>
+                    {taiLieuExpanded
+                      ? 'Thu gọn'
+                      : `Xem thêm (${hocPhansWithMaterials.length - 3} tài liệu)`}
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
 
@@ -378,7 +396,7 @@ export default function MonThiScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: spacing.lg, backgroundColor: colors.background },
+  container: { flex: 1, paddingVertical: spacing.lg, paddingHorizontal: spacing.md, backgroundColor: colors.background },
   centered: {
     flex: 1,
     justifyContent: 'center',
@@ -537,8 +555,43 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginBottom: spacing.xxs,
   },
-  examTypeIndicator: { marginTop: 2 },
+  examTypeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 4,
+  },
+  examTypeChip: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: borderRadius.xs,
+  },
   examTypeText: { ...typography.captionSmall, fontWeight: '600' },
+  newChip: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: borderRadius.xs,
+    backgroundColor: colors.warningTint,
+  },
+  newChipText: {
+    ...typography.captionSmall,
+    fontWeight: '700',
+    fontSize: 10,
+    color: colors.warning,
+  },
+  daLamChip: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: borderRadius.xs,
+    backgroundColor: colors.successTint,
+  },
+  daLamChipText: {
+    ...typography.captionSmall,
+    fontWeight: '700',
+    fontSize: 10,
+    color: colors.success,
+  },
   metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   metaText: { ...typography.caption, color: colors.textSecondary },
 });

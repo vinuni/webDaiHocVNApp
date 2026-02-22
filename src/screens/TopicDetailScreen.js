@@ -135,18 +135,6 @@ export default function TopicDetailScreen({ route, navigation }) {
                       <Text style={styles.examTitle} numberOfLines={2}>
                         {item.tendethi}
                       </Text>
-                      {attempted && (
-                        <View style={styles.attemptedBadge}>
-                          <Ionicons name="checkmark-circle" size={10} color={colors.success} />
-                          <Text style={styles.attemptedBadgeText}>Đã làm</Text>
-                        </View>
-                      )}
-                      {item.is_new && !attempted && (
-                        <View style={styles.newBadge}>
-                          <Ionicons name="flash" size={10} color={colors.warning} />
-                          <Text style={styles.newBadgeText}>MỚI</Text>
-                        </View>
-                      )}
                     </View>
                     <View style={styles.examMeta}>
                       <View style={styles.metaItem}>
@@ -162,8 +150,20 @@ export default function TopicDetailScreen({ route, navigation }) {
                         <Text style={styles.metaText}>{(item.bestscore ?? item.user_diem ?? 0).toFixed(1)}</Text>
                       </View>
                     </View>
-                    <View style={styles.examTypeIndicator}>
-                      <Text style={[styles.examTypeText, { color: examColor }]}>⚡ Đề Nhanh</Text>
+                    <View style={styles.examTypeRow}>
+                      <View style={[styles.examTypeChip, { backgroundColor: examColor + '18' }]}>
+                        <Text style={[styles.examTypeText, { color: examColor }]}>⚡ Đề Nhanh</Text>
+                      </View>
+                      {item.is_new && !attempted && (
+                        <View style={styles.newChip}>
+                          <Text style={styles.newChipText}>MỚI</Text>
+                        </View>
+                      )}
+                      {attempted && (
+                        <View style={styles.daLamChip}>
+                          <Text style={styles.daLamChipText}>Đã làm</Text>
+                        </View>
+                      )}
                     </View>
                   </View>
                   <View style={styles.examAction}>
@@ -217,7 +217,7 @@ export default function TopicDetailScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.md, paddingBottom: spacing.xl },
+  content: { paddingVertical: spacing.md, paddingHorizontal: spacing.sm, paddingBottom: spacing.xl },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
   card: { backgroundColor: colors.surface, borderRadius: 12, padding: spacing.lg, borderWidth: 1, borderColor: colors.border },
   title: { ...typography.titleSmall, color: colors.text },
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
   examTitleRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: spacing.xs,
+    justifyContent: 'space-between',
     marginBottom: spacing.xxs,
   },
   examTitle: {
@@ -283,6 +283,7 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontWeight: '600',
     flex: 1,
+    marginRight: spacing.sm,
   },
   newBadge: {
     flexDirection: 'row',
@@ -319,12 +320,45 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginBottom: spacing.xxs,
   },
-  examTypeIndicator: {
-    marginTop: 2,
+  examTypeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 4,
+  },
+  examTypeChip: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: borderRadius.xs,
   },
   examTypeText: {
     ...typography.captionSmall,
     fontWeight: '600',
+  },
+  newChip: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: borderRadius.xs,
+    backgroundColor: colors.warningTint,
+  },
+  newChipText: {
+    ...typography.captionSmall,
+    fontWeight: '700',
+    fontSize: 10,
+    color: colors.warning,
+  },
+  daLamChip: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: borderRadius.xs,
+    backgroundColor: colors.successTint,
+  },
+  daLamChipText: {
+    ...typography.captionSmall,
+    fontWeight: '700',
+    fontSize: 10,
+    color: colors.success,
   },
   metaItem: {
     flexDirection: 'row',

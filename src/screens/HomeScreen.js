@@ -307,12 +307,6 @@ export default function HomeScreen({ navigation }) {
                         <Text style={styles.attemptedBadgeText}>Đã làm</Text>
                       </View>
                     )}
-                    {item.is_new && !attempted && (
-                      <View style={styles.newBadge}>
-                        <Ionicons name="flash" size={10} color={colors.warning} />
-                        <Text style={styles.newBadgeText}>MỚI</Text>
-                      </View>
-                    )}
                   </View>
                   <View style={styles.examMeta}>
                     <View style={styles.metaItem}>
@@ -328,10 +322,22 @@ export default function HomeScreen({ navigation }) {
                       <Text style={styles.metaText}>{(item.bestscore ?? 0).toFixed(1)}</Text>
                     </View>
                   </View>
-                  <View style={styles.examTypeIndicator}>
-                    <Text style={[styles.examTypeText, { color: examColor }]}>
-                      {item.is_full ? '📝 Đề Full' : '⚡ Đề Nhanh'}
-                    </Text>
+                  <View style={styles.examTypeRow}>
+                    <View style={[styles.examTypeChip, { backgroundColor: examColor + '18' }]}>
+                      <Text style={[styles.examTypeText, { color: examColor }]}>
+                        {item.is_full ? '📝 Đề Full' : '⚡ Đề Nhanh'}
+                      </Text>
+                    </View>
+                    {item.is_new && !attempted && (
+                      <View style={styles.newChip}>
+                        <Text style={styles.newChipText}>MỚI</Text>
+                      </View>
+                    )}
+                    {attempted && (
+                      <View style={styles.daLamChip}>
+                        <Text style={styles.daLamChipText}>Đã làm</Text>
+                      </View>
+                    )}
                   </View>
                 </View>
                 <View style={styles.examAction}>
@@ -365,7 +371,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background 
   },
   headerBanner: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
     paddingTop: spacing.sm,
     paddingBottom: spacing.md,
     borderBottomLeftRadius: borderRadius.xl,
@@ -403,7 +409,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
     paddingBottom: spacing.xl,
   },
   introCard: {
@@ -634,12 +640,45 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginBottom: spacing.xxs,
   },
-  examTypeIndicator: {
-    marginTop: 2,
+  examTypeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 4,
+  },
+  examTypeChip: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: borderRadius.xs,
   },
   examTypeText: {
     ...typography.captionSmall,
     fontWeight: '600',
+  },
+  newChip: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: borderRadius.xs,
+    backgroundColor: colors.warningTint,
+  },
+  newChipText: {
+    ...typography.captionSmall,
+    fontWeight: '700',
+    fontSize: 10,
+    color: colors.warning,
+  },
+  daLamChip: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: borderRadius.xs,
+    backgroundColor: colors.successTint,
+  },
+  daLamChipText: {
+    ...typography.captionSmall,
+    fontWeight: '700',
+    fontSize: 10,
+    color: colors.success,
   },
   metaItem: {
     flexDirection: 'row',

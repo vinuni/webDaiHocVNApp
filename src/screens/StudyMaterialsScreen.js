@@ -133,7 +133,7 @@ export default function StudyMaterialsScreen({ route }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.md, paddingBottom: spacing.xl },
+  content: { paddingVertical: spacing.md, paddingHorizontal: spacing.sm, paddingBottom: spacing.xl },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
   emptyState: { flex: 1, justifyContent: 'center', padding: spacing.lg },
   emptyTitle: { ...typography.titleSmall, color: colors.text, marginBottom: spacing.sm },
