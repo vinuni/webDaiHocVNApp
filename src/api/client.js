@@ -4,10 +4,12 @@
  * Sends Bearer token from authStorage when present.
  * For guest users: GET requests that fail with 401 will not clear session.
  * For authenticated users: 401 on any request clears session.
+ * Failed requests are reported to the error reporting endpoint (except errors from that endpoint).
  */
 
 import { authStorage } from '../auth/storage';
 import { clearSession } from '../auth/sessionManager';
+import { reportApiError } from '../utils/errorReporter';
 
 const BASE = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:8000';
 const baseURL = BASE.replace(/\/$/, '');
@@ -19,51 +21,58 @@ export const apiClient = {
     const url = path.startsWith('http') ? path : `${baseURL}${path.startsWith('/') ? path : '/' + path}`;
     const token = await authStorage.getToken();
     const isGuest = !token;
-    
+    const method = (options.method || 'GET').toUpperCase();
+
     const headers = {
       Accept: 'application/json',
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     };
-    
+
     // Debug logging in development
     if (__DEV__) {
-      console.log(`[API] ${options.method || 'GET'} ${url}`);
+      console.log(`[API] ${method} ${url}`);
       if (options.body) {
         console.log('[API] Body:', options.body);
       }
     }
-    
-    const res = await fetch(url, { ...options, headers });
-    const text = await res.text();
-    
-    if (__DEV__) {
-      console.log(`[API] Response ${res.status}:`, text.substring(0, 200));
-    }
-    
-    if (!res.ok) {
-      if (res.status === 401) {
-        // Only clear session if user was authenticated (not a guest)
-        // OR if it's a non-GET request (POST, PUT, etc.)
-        const method = (options.method || 'GET').toUpperCase();
-        if (!isGuest || method !== 'GET') {
-          await clearSession();
-        }
+
+    try {
+      const res = await fetch(url, { ...options, headers });
+      const text = await res.text();
+
+      if (__DEV__) {
+        console.log(`[API] Response ${res.status}:`, text.substring(0, 200));
       }
-      const err = new Error(text || `HTTP ${res.status}`);
-      err.status = res.status;
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          if (!isGuest || method !== 'GET') {
+            await clearSession();
+          }
+        }
+        const err = new Error(text || `HTTP ${res.status}`);
+        err.status = res.status;
+        try {
+          err.body = text ? JSON.parse(text) : null;
+        } catch {
+          err.body = null;
+        }
+        reportApiError(err, { url, method }, { status: res.status, body: text });
+        throw err;
+      }
       try {
-        err.body = text ? JSON.parse(text) : null;
+        return text ? JSON.parse(text) : null;
       } catch {
-        err.body = null;
+        return null;
+      }
+    } catch (err) {
+      // Report only network/fetch failures here; HTTP error responses already reported above
+      if (err.status === undefined) {
+        reportApiError(err, { url, method: method || 'GET' }, { status: 0, body: err.message });
       }
       throw err;
-    }
-    try {
-      return text ? JSON.parse(text) : null;
-    } catch {
-      return null;
     }
   },
 
@@ -96,23 +105,31 @@ export const apiClient = {
       Accept: 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
-    const res = await fetch(url, { method: 'POST', headers, body: formData });
-    const text = await res.text();
-    if (!res.ok) {
-      if (res.status === 401) await clearSession();
-      const err = new Error(text || `HTTP ${res.status}`);
-      err.status = res.status;
+    try {
+      const res = await fetch(url, { method: 'POST', headers, body: formData });
+      const text = await res.text();
+      if (!res.ok) {
+        if (res.status === 401) await clearSession();
+        const err = new Error(text || `HTTP ${res.status}`);
+        err.status = res.status;
+        try {
+          err.body = text ? JSON.parse(text) : null;
+        } catch {
+          err.body = null;
+        }
+        reportApiError(err, { url, method: 'POST' }, { status: res.status, body: text });
+        throw err;
+      }
       try {
-        err.body = text ? JSON.parse(text) : null;
+        return text ? JSON.parse(text) : null;
       } catch {
-        err.body = null;
+        return null;
+      }
+    } catch (err) {
+      if (err.status === undefined) {
+        reportApiError(err, { url, method: 'POST' }, { status: 0, body: err.message });
       }
       throw err;
-    }
-    try {
-      return text ? JSON.parse(text) : null;
-    } catch {
-      return null;
     }
   },
 };

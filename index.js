@@ -1,5 +1,9 @@
 import { registerRootComponent } from 'expo';
 
+import { initGlobalErrorHandler } from './src/utils/errorReporter';
+
+initGlobalErrorHandler();
+
 import App from './App';
 
 // registerRootComponent calls AppRegistry.registerComponent('main', () => App);

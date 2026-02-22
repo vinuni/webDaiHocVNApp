@@ -7,10 +7,14 @@ const mockClearSession = jest.fn(() => Promise.resolve());
 jest.mock('../../auth/storage', () => ({
   authStorage: {
     getToken: jest.fn(() => Promise.resolve('fake-token')),
+    getUser: jest.fn(() => Promise.resolve(null)),
   },
 }));
 jest.mock('../../auth/sessionManager', () => ({
   clearSession: (...args) => mockClearSession(...args),
+}));
+jest.mock('../../utils/errorReporter', () => ({
+  reportApiError: jest.fn(),
 }));
 
 const { authStorage } = require('../../auth/storage');

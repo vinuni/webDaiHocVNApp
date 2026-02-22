@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiClient } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
+import { preferencesStorage } from '../storage/preferences';
 import { colors, spacing, borderRadius, typography, minTouchTargetSize, gradients, shadows, iconSizes } from '../theme';
 
 export default function HomeScreen({ navigation }) {
@@ -353,6 +354,20 @@ export default function HomeScreen({ navigation }) {
               </TouchableOpacity>
             );
           })
+        )}
+
+        {de_this.length > 0 && selectedMonThiId && (
+          <TouchableOpacity
+            style={styles.seeMoreRow}
+            onPress={async () => {
+              await preferencesStorage.setSelectedMonThiId(selectedMonThiId);
+              navigation.navigate('MonThi');
+            }}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.seeMoreText}>Xem thêm</Text>
+            <Ionicons name="arrow-forward" size={iconSizes.sm} color={colors.primary} />
+          </TouchableOpacity>
         )}
       </ScrollView>
     </View>
@@ -706,5 +721,19 @@ const styles = StyleSheet.create({
     ...typography.body, 
     color: colors.textSecondary,
     textAlign: 'center',
+  },
+  seeMoreRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.md,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  seeMoreText: {
+    ...typography.bodySmall,
+    color: colors.primary,
+    fontWeight: '600',
   },
 });

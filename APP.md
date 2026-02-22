@@ -1,8 +1,12 @@
 # App – Run & Build
 
-Expo 54 (React Native) project. How to run in development and build for production.
+Expo 54 (React Native) project. How to run in development and how to build development vs production.
 
-## Development (run without building)
+---
+
+## Run in development (no build)
+
+Use this for day-to-day coding. No native build required; JS is served from Metro.
 
 From the app folder:
 
@@ -26,7 +30,42 @@ npm run android
 npm run ios
 ```
 
-## Building for production
+**Note:** On Android/iOS you can use **Expo Go** (from store) or a **development build** (see below) for dev menu and native modules.
+
+---
+
+## Development build
+
+A **development build** is a native app that includes the Expo dev client. Use it when you need the dev menu, custom native code, or to test on a device without Expo Go.
+
+### Option A: EAS Build (cloud)
+
+```bash
+npm install -g eas-cli
+eas login
+eas build:configure
+eas build --platform android --profile development
+eas build --platform ios --profile development
+```
+
+Ensure `eas.json` has a `development` profile (created by `eas build:configure`). Install the built APK/IPA on your device and run `npm start`; the app will connect to your Metro bundler.
+
+### Option B: Local build (Android)
+
+Requires **Android SDK** and `ANDROID_HOME` (see “Android SDK setup” below).
+
+```bash
+npx expo prebuild
+npx expo run:android
+```
+
+This builds and runs a debug/dev build on a connected device or emulator.
+
+---
+
+## Production build
+
+Use these to create builds for **web hosting** or **store distribution** (Google Play / App Store).
 
 ### Web (static export)
 
@@ -37,25 +76,23 @@ npx expo export --platform web
 
 Output goes to `dist/`. Serve that folder with any static host (e.g. Laravel `public` or Nginx).
 
-### Android / iOS (native builds)
+### Android (AAB/APK for Play Store or sideload)
 
-Use **EAS Build** (Expo’s cloud build) or a **local build** with native code.
-
-#### Option 1: EAS Build (recommended)
+**Option 1: EAS Build (recommended)**
 
 ```bash
-npm install -g eas-cli
-eas login
-eas build:configure
-eas build --platform android
-eas build --platform ios
+eas build --platform android --profile production
 ```
 
-First run of `eas build:configure` creates `eas.json`. Then you can use `eas build --platform all` for both platforms.
+```bash
+eas build --platform android --profile development
+```
 
-#### Option 2: Local build (Android)
+Produces an AAB (or APK if configured) for Google Play or direct install. First run `eas build:configure` if needed.
 
-Requires **Android SDK** installed and `ANDROID_HOME` set (see below).
+**Option 2: Local build**
+
+Requires **Android SDK** and `ANDROID_HOME` (see below).
 
 ```bash
 npx expo prebuild
@@ -63,7 +100,17 @@ cd android
 .\gradlew assembleRelease
 ```
 
-APK path: `android/app/build/outputs/apk/release/`.
+APK path: `android/app/build/outputs/apk/release/`. For AAB (Play Store): `.\gradlew bundleRelease` → `android/app/build/outputs/bundle/release/`.
+
+### iOS (App Store)
+
+Use EAS Build (Mac or cloud):
+
+```bash
+eas build --platform ios --profile production
+```
+
+Local builds require Xcode and a Mac: `npx expo run:ios --configuration Release`.
 
 ### Android SDK setup (Windows, for local run/build)
 
@@ -87,10 +134,14 @@ APK path: `android/app/build/outputs/apk/release/`.
 
 4. **Run app:** `npx expo run:android` (or start with `npx expo start` and press **a** with an emulator/device connected).
 
+---
+
 ## Summary
 
-| Goal              | Command / step                                      |
-|-------------------|------------------------------------------------------|
-| Run in dev        | `npm start` then w / a / i                           |
-| Build for web     | `npx expo export --platform web` → use `dist/`        |
-| Build Android/iOS | Use EAS Build or `expo prebuild` + native build       |
+| Goal                | Command / step                                                |
+|---------------------|---------------------------------------------------------------|
+| Run in dev          | `npm start` then w / a / i                                    |
+| Development build   | `eas build --profile development` or `npx expo run:android`  |
+| Production – web   | `npx expo export --platform web` → serve `dist/`              |
+| Production – Android | `eas build --platform android --profile production` or local `assembleRelease` / `bundleRelease` |
+| Production – iOS   | `eas build --platform ios --profile production`               |
