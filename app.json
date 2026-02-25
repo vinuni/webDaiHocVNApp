@@ -1,7 +1,8 @@
 {
   "expo": {
-    "name": "webDaiHocVN73App",
-    "slug": "webDaiHocVN73App",
+    "name": "ThiThu",
+    "slug": "thithu",
+    "scheme": "thithuonline",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -17,8 +18,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#F5E6C8"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.daihoc.vn1.webDaiHocVN73App"
@@ -26,9 +27,7 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-web-browser"
-    ],
+    "plugins": ["expo-web-browser"],
     "extra": {
       "eas": {
         "projectId": "f5d546ec-3741-487e-8267-f9569260b894"

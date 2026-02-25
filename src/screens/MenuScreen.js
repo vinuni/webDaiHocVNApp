@@ -45,7 +45,7 @@ function SectionTitle({ title }) {
 
 export default function MenuScreen() {
   const navigation = useNavigation();
-  const { logout } = useAuth();
+  const { logout, isAuthenticated } = useAuth();
 
   const rootNav = navigation.getParent?.() ?? navigation;
 
@@ -63,7 +63,14 @@ export default function MenuScreen() {
       'Bạn có chắc muốn đăng xuất?',
       [
         { text: 'Hủy', style: 'cancel' },
-        { text: 'Đăng xuất', style: 'destructive', onPress: () => logout() },
+        { 
+          text: 'Đăng xuất', 
+          style: 'destructive', 
+          onPress: async () => {
+            await logout();
+            navigation.navigate('MainTabs', { screen: 'Home' });
+          }
+        },
       ]
     );
   };
@@ -114,16 +121,20 @@ export default function MenuScreen() {
         />
       </View>
 
-      <SectionTitle title="Khác" />
-      <View style={styles.section}>
-        <MenuRow
-          icon="log-out-outline"
-          iconColor={colors.danger}
-          label="Đăng xuất"
-          onPress={handleLogout}
-          last
-        />
-      </View>
+      {isAuthenticated && (
+        <>
+          <SectionTitle title="Khác" />
+          <View style={styles.section}>
+            <MenuRow
+              icon="log-out-outline"
+              iconColor={colors.danger}
+              label="Đăng xuất"
+              onPress={handleLogout}
+              last
+            />
+          </View>
+        </>
+      )}
 
       <View style={styles.footer}>
         <Text style={styles.footerText}>Thi Thử Online</Text>

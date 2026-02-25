@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   RefreshControl,
-  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,41 +12,33 @@ import { apiClient } from '../api/client';
 import ProgressRing from '../components/ProgressRing';
 import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize, gradients, iconSizes } from '../theme';
 
+const DEFAULT_GAMIFICATION = { xp: 0, level: 1, badges: [], streak: {}, challenges: [], leaderboard: [] };
+
 export default function GamificationScreen() {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(DEFAULT_GAMIFICATION);
   const [refreshing, setRefreshing] = useState(false);
 
-  const load = async () => {
-    try {
-      const res = await apiClient.get('/api/v1/gamification');
-      setData(res);
-    } catch {
-      setData({ xp: 0, level: 1, badges: [], streak: {}, challenges: [], leaderboard: [] });
-    } finally {
-      setLoading(false);
-    }
+  const load = () => {
+    apiClient
+      .get('/api/v1/gamification')
+      .then((res) => setData(res || DEFAULT_GAMIFICATION))
+      .catch(() => setData(DEFAULT_GAMIFICATION));
   };
 
   useEffect(() => {
     load();
   }, []);
 
-  const onRefresh = async () => {
+  const onRefresh = () => {
     setRefreshing(true);
-    await load();
-    setRefreshing(false);
+    apiClient
+      .get('/api/v1/gamification')
+      .then((res) => setData(res || DEFAULT_GAMIFICATION))
+      .catch(() => {})
+      .finally(() => setRefreshing(false));
   };
 
-  if (loading && !data) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
-
-  const { xp = 0, level = 1, badges = [], streak = {}, challenges = [], leaderboard = [] } = data || {};
+  const { xp = 0, level = 1, badges = [], streak = {}, challenges = [], leaderboard = [] } = data;
   const earnedBadges = badges.filter((b) => b.earned);
   const activeChallenges = challenges.filter((c) => !c.completed);
 

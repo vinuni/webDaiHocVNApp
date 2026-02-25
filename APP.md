@@ -114,6 +114,25 @@ Local builds require Xcode and a Mac: `npx expo run:ios --configuration Release`
 
 ### Android SDK setup (Windows, for local run/build)
 
+Local Android builds need **Java (JDK 17)** and the **Android SDK**. Expo SDK 54 requires JDK 17.
+
+#### Java (JDK 17)
+
+1. **Install JDK 17** (pick one):
+   - **Option A – winget:** `winget install Microsoft.OpenJDK.17`
+   - **Option B – Manual:** Download [Microsoft Build of OpenJDK 17](https://learn.microsoft.com/en-us/java/openjdk/download#openjdk-17) or [Adoptium Eclipse Temurin 17](https://adoptium.net/) and install (e.g. to `C:\Program Files\Microsoft\jdk-17.x.x` or `C:\Program Files\Eclipse Adoptium\jdk-17.x.x`).
+
+2. **Set JAVA_HOME and Path** (PowerShell). Replace `C:\Program Files\Microsoft\jdk-17.x.x` with your JDK install folder (e.g. after winget, look in `C:\Program Files\Microsoft\`):
+   ```powershell
+   [System.Environment]::SetEnvironmentVariable('JAVA_HOME', "C:\Program Files\Microsoft\jdk-17.x.x", 'User')
+   $path = [System.Environment]::GetEnvironmentVariable('Path', 'User')
+   $path = "%JAVA_HOME%\bin;$path"
+   [System.Environment]::SetEnvironmentVariable('Path', $path, 'User')
+   ```
+   Then **close and reopen** the terminal. Verify: `java -version` (should show 17.x).
+
+#### Android SDK
+
 1. **Install Android Studio** (easiest): https://developer.android.com/studio  
    - During setup, ensure **Android SDK** is installed (default).
 
@@ -136,6 +155,19 @@ Local builds require Xcode and a Mac: `npx expo run:ios --configuration Release`
 
 ---
 
+## API / Auth
+
+Protected endpoints (e.g. `GET /api/v1/user`) require the **Bearer token** in the request:
+
+- **In the app:** The API client sends `Authorization: Bearer <token>` automatically (token is read from storage on each request).
+- **Testing in browser or Postman:** Opening `http://localhost:8000/api/v1/user` without the header returns `{"message":"Unauthenticated."}`. To test:
+  1. Log in via `POST /api/v1/login` with `email` and `password`.
+  2. Use the returned `token` in the header: `Authorization: Bearer <token>`.
+
+In dev, the console logs each request as `(with auth)` or `(no auth)` so you can confirm the token is sent.
+
+---
+
 ## Summary
 
 | Goal                | Command / step                                                |
@@ -145,3 +177,55 @@ Local builds require Xcode and a Mac: `npx expo run:ios --configuration Release`
 | Production – web   | `npx expo export --platform web` → serve `dist/`              |
 | Production – Android | `eas build --platform android --profile production` or local `assembleRelease` / `bundleRelease` |
 | Production – iOS   | `eas build --platform ios --profile production`               |
+
+### Run on your Android phone (summary)
+
+1. **Expo Go (quick test):** `npm start` → press **a** → open **Expo Go** on the phone and scan the QR code. Phone and PC must be on the same Wi‑Fi.
+2. **Development build (recommended for Google Sign-In, dev menu):**
+   - **EAS (cloud):** `eas build --platform android --profile development` → download APK from the build link → install on phone → on PC run `npm start` → open the installed app (same Wi‑Fi).
+   - **Local:** Set `ANDROID_HOME`, connect phone via USB, then `npx expo prebuild` and `npx expo run:android`.
+
+---
+
+## Google Sign-In (OAuth)
+
+To enable **Đăng nhập / Đăng ký bằng Google** you need OAuth 2.0 client IDs from Google Cloud and to set them in `.env`.
+
+### 1. Create a project and OAuth consent (if needed)
+
+1. Open [Google Cloud Console](https://console.cloud.google.com/).
+2. Create a project or select an existing one.
+3. Go to **APIs & Services** → **OAuth consent screen**.
+4. Choose **External** (or Internal for workspace-only), set app name and support email, add your email as test user if in testing mode. Save.
+
+### 2. Create OAuth client IDs
+
+Go to **APIs & Services** → **Credentials** → **Create credentials** → **OAuth client ID**.
+
+Create **three** client IDs (one per application type):
+
+| Application type | Use for | Where to use |
+|------------------|--------|----------------|
+| **Web application** | Web build + Expo auth flow | `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` |
+| **iOS** | iOS app / Expo Go on iOS | `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` |
+| **Android** | Android app / Expo Go on Android | `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` |
+
+- **Web**: Create “Web application”. Add **Authorized redirect URIs** if your backend or Expo requires them (e.g. Expo’s redirect). Copy the **Client ID** (ends in `.apps.googleusercontent.com`).
+- **iOS**: Create “iOS”. Enter your **iOS bundle ID** (e.g. from `app.json` / EAS: `com.yourapp.name`). For Expo Go use the Expo Go bundle ID (see [Expo Google auth docs](https://docs.expo.dev/guides/authentication/#google)). Copy the **Client ID**.
+- **Android**: Create “Android”. Enter **Package name** (e.g. from `app.json`: `com.yourapp.name`) and the **SHA-1** of your signing key. For debug: `keytool -keystore ~/.android/debug.keystore -list -v` (password often `android`). Copy the **Client ID**.
+
+### 3. Set variables in `.env`
+
+Copy `.env.example` to `.env` (if you haven’t) and set:
+
+```env
+EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=123456789-xxxx.apps.googleusercontent.com
+EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=123456789-yyyy.apps.googleusercontent.com
+EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID=123456789-zzzz.apps.googleusercontent.com
+```
+
+At least **Web client ID** is required; iOS and Android IDs are needed for native/Expo Go on those platforms. Restart Metro (`npm start`) after changing `.env`.
+
+### 4. Backend
+
+Your Laravel backend must accept Google tokens (e.g. `POST /api/v1/social-login` with `provider: 'google'` and `access_token`) and create or log in the user. Ensure the same Google project and client IDs are allowed in the backend if it validates the token.

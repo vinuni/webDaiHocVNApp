@@ -14,7 +14,7 @@ export default function ResultScreen({ route, navigation }) {
   const [loading, setLoading] = useState(true);
   const [expandedQuestions, setExpandedQuestions] = useState({});
   const [fontSizeLevel, setFontSizeLevel] = useState(1);
-  const contentFontSize = 18 + fontSizeLevel * 2;
+  const contentFontSize = 16 + fontSizeLevel * 2;
 
   useEffect(() => {
     let m = true;
@@ -82,7 +82,7 @@ export default function ResultScreen({ route, navigation }) {
                   showPercentage={false}
                   hideCenterText
                 />
-                <View style={styles.scoreCircleCenter} pointerEvents="none">
+                <View style={styles.scoreCircleCenter}>
                   <Text style={[styles.scoreValue, { color: isPassed ? colors.success : colors.warning }]}>
                     {score.toFixed(1)}
                   </Text>
@@ -348,6 +348,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
+    pointerEvents: 'none',
   },
   scoreValue: { 
     fontSize: 48,

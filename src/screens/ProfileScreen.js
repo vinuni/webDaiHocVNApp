@@ -30,15 +30,6 @@ export default function ProfileScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-
-  if (!isAuthenticated) {
-    return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={{ marginTop: spacing.sm, color: colors.textSecondary }}>Đang chuyển đến đăng nhập...</Text>
-      </View>
-    );
-  }
   const [gamification, setGamification] = useState(null);
 
   const userData = user?.user ?? user;
@@ -70,17 +61,15 @@ export default function ProfileScreen({ navigation }) {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      const [userRes, gamRes] = await Promise.all([
-        apiClient.get('/api/v1/user'),
-        apiClient.get('/api/v1/gamification'),
-      ]);
+      const userRes = await apiClient.get('/api/v1/user');
       setUser(userRes?.user ?? userRes ?? authUser);
-      setGamification(gamRes || null);
     } catch {
-      loadGamification();
+      // keep current user
     } finally {
       setRefreshing(false);
     }
+    // XP/gamification: load in background so refresh UI is not blocked
+    loadGamification();
   };
 
   const pickAndUploadAvatar = async () => {
@@ -125,7 +114,24 @@ export default function ProfileScreen({ navigation }) {
 
   const handleLogout = async () => {
     await logout();
+    // Defer navigation to next tick so auth state is committed; then go to Home via root navigator.
+    setTimeout(() => {
+      let nav = navigation;
+      while (nav?.getParent?.()) {
+        nav = nav.getParent();
+      }
+      nav?.navigate?.('Main', { screen: 'MainTabs', params: { screen: 'Home' } });
+    }, 0);
   };
+
+  if (!isAuthenticated) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={{ marginTop: spacing.sm, color: colors.textSecondary }}>Đang chuyển đến đăng nhập...</Text>
+      </View>
+    );
+  }
 
   if (loading && !userData) {
     return (<View style={styles.centered}><ActivityIndicator size="large" color={colors.primary} /></View>);

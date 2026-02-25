@@ -18,6 +18,72 @@ import { colors, spacing, borderRadius, typography, minTouchTargetSize, iconSize
 
 const logo = require('../../assets/logo.png');
 
+const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '';
+const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || '';
+const androidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || '';
+const hasGoogleConfig = !!(webClientId || iosClientId || androidClientId);
+
+function GoogleRegisterButton({ navigation, disabled }) {
+  const { socialLogin } = useAuth();
+  const [loading, setLoading] = useState(false);
+  let useAuthRequest = () => [null, null, async () => {}];
+  try {
+    useAuthRequest = require('expo-auth-session/providers/google').useAuthRequest;
+  } catch {}
+  const config = React.useMemo(() => {
+    const c = {};
+    if (webClientId) c.webClientId = webClientId;
+    if (iosClientId) c.iosClientId = iosClientId;
+    if (androidClientId) c.androidClientId = androidClientId;
+    return c;
+  }, []);
+  const [request, response, promptAsync] = useAuthRequest(config);
+
+  React.useEffect(() => {
+    if (!response || response.type !== 'success') return;
+    const token = response.params?.access_token || response.authentication?.accessToken;
+    if (!token) {
+      Alert.alert('Lỗi', 'Không nhận được token từ Google.');
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    socialLogin('google', token)
+      .then(() => {
+        navigation.navigate('Main', { screen: 'MainTabs', params: { screen: 'Home' } });
+      })
+      .catch((e) => {
+        Alert.alert('Đăng ký thất bại', e?.body?.message || e?.message || 'Đăng ký bằng Google thất bại.');
+      })
+      .finally(() => setLoading(false));
+  }, [response?.type]);
+
+  const onPress = () => {
+    setLoading(true);
+    promptAsync();
+  };
+
+  return (
+    <TouchableOpacity
+      style={[styles.socialButton, styles.googleButton, (loading || disabled) && styles.socialButtonDisabled]}
+      onPress={onPress}
+      disabled={loading || disabled}
+      activeOpacity={0.8}
+    >
+      {loading ? (
+        <ActivityIndicator size="small" color="#4285F4" />
+      ) : (
+        <>
+          <View style={styles.googleIconWrap}>
+            <Text style={styles.googleIconText}>G</Text>
+          </View>
+          <Text style={styles.googleButtonText}>Đăng ký bằng Google</Text>
+        </>
+      )}
+    </TouchableOpacity>
+  );
+}
+
 export default function RegisterScreen({ navigation }) {
   const { register } = useAuth();
   const [name, setName] = useState('');
@@ -65,6 +131,8 @@ export default function RegisterScreen({ navigation }) {
     setLoading(true);
     try {
       await register(name.trim(), email.trim(), password, passwordConfirmation);
+      // Redirect to home screen
+      navigation.navigate('Main', { screen: 'Home' });
     } catch (e) {
       const msg = getRegisterErrorMessage(e);
       Alert.alert('Đăng ký thất bại', msg);
@@ -125,6 +193,18 @@ export default function RegisterScreen({ navigation }) {
           <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={loading}>
             {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Đăng ký</Text>}
           </TouchableOpacity>
+
+          {hasGoogleConfig && (
+            <>
+              <View style={styles.divider}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>hoặc</Text>
+                <View style={styles.dividerLine} />
+              </View>
+              <GoogleRegisterButton navigation={navigation} disabled={loading} />
+            </>
+          )}
+
           <TouchableOpacity style={styles.link} onPress={() => navigation.navigate('Login')} disabled={loading}>
             <Text style={styles.linkText}>Đã có tài khoản? Đăng nhập</Text>
           </TouchableOpacity>
@@ -136,8 +216,8 @@ export default function RegisterScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
-  scrollContent: { flexGrow: 1, padding: 24, paddingBottom: 80 },
-  card: { backgroundColor: '#fff', borderRadius: 16, padding: 24, marginHorizontal: 16, borderWidth: 1, borderColor: '#E2E8F0' },
+  scrollContent: { flexGrow: 1, paddingHorizontal: 12, paddingTop: 24, paddingBottom: 80 },
+  card: { backgroundColor: '#fff', borderRadius: 16, padding: 24, marginHorizontal: 8, borderWidth: 1, borderColor: '#E2E8F0' },
   brandRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   brandIcon: { marginRight: 8 },
   brandTitle: { fontSize: 18, fontWeight: '700', color: colors.primary },
@@ -147,6 +227,33 @@ const styles = StyleSheet.create({
   input: { borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, marginBottom: 12, fontSize: 16, minHeight: minTouchTargetSize },
   button: { backgroundColor: '#10B981', padding: 16, borderRadius: 12, alignItems: 'center', justifyContent: 'center', minHeight: minTouchTargetSize, marginTop: 8 },
   buttonText: { color: '#fff', fontWeight: '600' },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  dividerLine: { flex: 1, height: 1, backgroundColor: '#E2E8F0' },
+  dividerText: { fontSize: 13, color: '#64748B', marginHorizontal: 12 },
+  socialButton: {
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: minTouchTargetSize,
+    flexDirection: 'row',
+  },
+  googleButton: {
+    backgroundColor: '#fff',
+    borderColor: '#dadce0',
+    gap: spacing.sm,
+  },
+  googleIconWrap: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
+  googleIconText: { fontSize: 24, fontWeight: '700', color: '#4285F4' },
+  googleButtonText: { fontSize: 14, color: '#3c4043', fontWeight: '600' },
+  socialButtonDisabled: { opacity: 0.7 },
   link: { marginTop: 20, alignItems: 'center' },
   linkText: { color: '#6366F1' },
 });

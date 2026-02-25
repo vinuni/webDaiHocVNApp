@@ -12,8 +12,13 @@ jest.mock('@react-navigation/native', () => ({
   }),
 }));
 
+const mockUseAuth = jest.fn(() => ({
+  logout: jest.fn(),
+  isAuthenticated: true,
+}));
+
 jest.mock('../../auth/AuthContext', () => ({
-  useAuth: () => ({ logout: jest.fn() }),
+  useAuth: () => mockUseAuth(),
 }));
 
 jest.mock('@expo/vector-icons', () => ({
@@ -44,5 +49,14 @@ describe('MenuScreen', () => {
   it('shows app footer text', () => {
     render(<MenuScreen />);
     expect(screen.getByText('Thi Thử Online')).toBeTruthy();
+  });
+
+  it('hides Đăng xuất for guest', () => {
+    mockUseAuth.mockReturnValueOnce({
+      logout: jest.fn(),
+      isAuthenticated: false,
+    });
+    render(<MenuScreen />);
+    expect(screen.queryByText('Đăng xuất')).toBeNull();
   });
 });

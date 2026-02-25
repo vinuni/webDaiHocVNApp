@@ -48,7 +48,7 @@ export default function ExamTakeScreen({ route, navigation }) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [minutesLeft, setMinutesLeft] = useState(0);
   const [timerReady, setTimerReady] = useState(false);
-  // Font size for question/options: 0 = 18, 1 = 20, 2 = 22, 3 = 24
+  // Font size for question/options: 0 = 16, 1 = 18, 2 = 20, 3 = 22, 4 = 24
   const [fontSizeLevel, setFontSizeLevel] = useState(1);
 
   if (!isAuthenticated) {
@@ -59,7 +59,7 @@ export default function ExamTakeScreen({ route, navigation }) {
       </View>
     );
   }
-  const questionFontSize = 18 + fontSizeLevel * 2;
+  const questionFontSize = 16 + fontSizeLevel * 2;
 
   useEffect(() => {
     let mounted = true;
@@ -73,7 +73,17 @@ export default function ExamTakeScreen({ route, navigation }) {
           setTimerReady(true);
         }
       } catch (e) {
-        if (mounted) Alert.alert('Lỗi', e?.message || 'Không tải được đề thi.');
+        if (!mounted) return;
+        const body = e?.body;
+        if (e?.status === 403 && body?.code === 'EXAM_COMPLETED' && body?.redirect === 'ket_qua') {
+          navigation.replace('Result', {
+            deThiId: body.dethi_id ?? deThiId,
+            tendethi: tendethi || '',
+            diem: body.user_diem,
+          });
+          return;
+        }
+        Alert.alert('Lỗi', e?.message || 'Không tải được đề thi.');
       } finally {
         if (mounted) setLoading(false);
       }
@@ -199,14 +209,14 @@ export default function ExamTakeScreen({ route, navigation }) {
                   accessibilityRole="radio"
                   accessibilityState={{ selected }}
                 >
-                  <View style={[styles.optionBadge, selected && styles.optionBadgeSelected]} pointerEvents="none">
+                  <View style={[styles.optionBadge, selected && styles.optionBadgeSelected]}>
                     <Text style={[styles.optionLetter, selected && styles.optionLetterSelected]}>{c}</Text>
                   </View>
-                  <View style={styles.optionContent} pointerEvents="none">
+                  <View style={styles.optionContent}>
                     <MathText value={opt} containerStyle={selected ? styles.optionMathSelected : undefined} contentFontSize={questionFontSize} />
                   </View>
                   {selected && (
-                    <View style={styles.checkIconWrap} pointerEvents="none">
+                    <View style={styles.checkIconWrap}>
                       <Ionicons name="checkmark-circle" size={18} color={colors.primary} />
                     </View>
                   )}
@@ -454,6 +464,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.sm,
+    pointerEvents: 'none',
   },
   optionBadgeSelected: {
     backgroundColor: colors.primary,
@@ -466,10 +477,11 @@ const styles = StyleSheet.create({
   optionLetterSelected: { 
     color: '#fff',
   },
-  optionContent: { flex: 1 },
+  optionContent: { flex: 1, pointerEvents: 'none' },
   optionMathSelected: {},
   checkIconWrap: {
     marginLeft: spacing.xs,
+    pointerEvents: 'none',
   },
   swipeHint: {
     ...typography.caption,

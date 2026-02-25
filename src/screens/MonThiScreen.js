@@ -7,7 +7,9 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../auth/AuthContext';
 import { apiClient } from '../api/client';
 import EmptyState from '../components/EmptyState';
 import { preferencesStorage, getDefaultMonThiId } from '../storage/preferences';
@@ -22,6 +24,9 @@ import {
 } from '../theme';
 
 export default function MonThiScreen({ navigation }) {
+  const { user } = useAuth();
+  const userId = user?.id ?? 0;
+
   const [monThis, setMonThis] = useState([]);
   const [selectedMonThiId, setSelectedMonThiId] = useState(null);
   const [detail, setDetail] = useState(null);
@@ -53,6 +58,16 @@ export default function MonThiScreen({ navigation }) {
     return () => { mounted = false; };
   }, []);
 
+  const mergeCompletedIntoDeThis = (list, completedMap) => {
+    if (!completedMap || completedMap.size === 0) return list;
+    return (list || []).map((d) => {
+      const fallbackDiem = completedMap.get(d.id);
+      const alreadyDone = d.user_attempted === true || (d.user_diem != null && d.user_diem !== '');
+      if (alreadyDone || fallbackDiem === undefined) return d;
+      return { ...d, user_attempted: true, user_diem: fallbackDiem };
+    });
+  };
+
   const loadDetail = useCallback(async (id) => {
     if (!id) {
       setDetail(null);
@@ -64,12 +79,23 @@ export default function MonThiScreen({ navigation }) {
     }
     setDetailLoading(true);
     try {
-      const res = await apiClient.get('/api/v1/mon-thi/' + id);
+      const res = await apiClient.get(`/api/v1/mon-thi/${id}?user_id=${userId}`);
+      const nhanh = res.de_this_nhanh ?? [];
+      const full = res.de_this_full ?? [];
       setDetail(res);
-      setDeThisNhanh(res.de_this_nhanh ?? []);
-      setDeThisFull(res.de_this_full ?? []);
+      setDeThisNhanh(nhanh);
+      setDeThisFull(full);
       setNhanhTotal(res.de_this_nhanh_total ?? 0);
       setFullTotal(res.de_this_full_total ?? 0);
+
+      // Lazy: update DeThi completed status in background (don't block first paint)
+      if (userId > 0 && (nhanh.length > 0 || full.length > 0)) {
+        apiClient.getCompletedExams().then((completedMap) => {
+          if (completedMap.size === 0) return;
+          setDeThisNhanh((prev) => mergeCompletedIntoDeThis(prev, completedMap));
+          setDeThisFull((prev) => mergeCompletedIntoDeThis(prev, completedMap));
+        }).catch(() => { /* ignore; lists already shown */ });
+      }
     } catch {
       setDetail(null);
       setDeThisNhanh([]);
@@ -77,11 +103,17 @@ export default function MonThiScreen({ navigation }) {
     } finally {
       setDetailLoading(false);
     }
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     loadDetail(selectedMonThiId);
   }, [selectedMonThiId, loadDetail]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (selectedMonThiId) loadDetail(selectedMonThiId);
+    }, [selectedMonThiId, loadDetail])
+  );
 
   useEffect(() => {
     setTaiLieuExpanded(false);
@@ -98,30 +130,44 @@ export default function MonThiScreen({ navigation }) {
     setLoadingMoreNhanh(true);
     try {
       const res = await apiClient.get(
-        `/api/v1/mon-thi/${selectedMonThiId}/de-thi-nhanh?offset=${deThisNhanh.length}&per_page=10`
+        `/api/v1/mon-thi/${selectedMonThiId}/de-thi-nhanh?offset=${deThisNhanh.length}&per_page=10&user_id=${userId}`
       );
-      setDeThisNhanh((prev) => [...prev, ...(res.data ?? [])]);
+      const newItems = res.data ?? [];
+      setDeThisNhanh((prev) => [...prev, ...newItems]);
+      if (userId > 0 && newItems.length > 0) {
+        apiClient.getCompletedExams().then((completedMap) => {
+          if (completedMap.size === 0) return;
+          setDeThisNhanh((prev) => mergeCompletedIntoDeThis(prev, completedMap));
+        }).catch(() => {});
+      }
     } catch (_) {
       // keep current list
     } finally {
       setLoadingMoreNhanh(false);
     }
-  }, [selectedMonThiId, loadingMoreNhanh, deThisNhanh.length, nhanhTotal]);
+  }, [selectedMonThiId, loadingMoreNhanh, deThisNhanh.length, nhanhTotal, userId]);
 
   const loadMoreFull = useCallback(async () => {
     if (!selectedMonThiId || loadingMoreFull || deThisFull.length >= fullTotal) return;
     setLoadingMoreFull(true);
     try {
       const res = await apiClient.get(
-        `/api/v1/mon-thi/${selectedMonThiId}/de-thi-full?offset=${deThisFull.length}&per_page=10`
+        `/api/v1/mon-thi/${selectedMonThiId}/de-thi-full?offset=${deThisFull.length}&per_page=10&user_id=${userId}`
       );
-      setDeThisFull((prev) => [...prev, ...(res.data ?? [])]);
+      const newItems = res.data ?? [];
+      setDeThisFull((prev) => [...prev, ...newItems]);
+      if (userId > 0 && newItems.length > 0) {
+        apiClient.getCompletedExams().then((completedMap) => {
+          if (completedMap.size === 0) return;
+          setDeThisFull((prev) => mergeCompletedIntoDeThis(prev, completedMap));
+        }).catch(() => {});
+      }
     } catch (_) {
       // keep current list
     } finally {
       setLoadingMoreFull(false);
     }
-  }, [selectedMonThiId, loadingMoreFull, deThisFull.length, fullTotal]);
+  }, [selectedMonThiId, loadingMoreFull, deThisFull.length, fullTotal, userId]);
 
   const getSubjectColor = (id) => {
     const subjectColors = [
@@ -149,9 +195,9 @@ export default function MonThiScreen({ navigation }) {
   };
 
   const renderExamCard = (item, examColor) => {
-    const attempted = item.user_attempted === true;
+    const completed = item.user_attempted === true || (item.user_diem != null && item.user_diem !== '');
     const onPress = () => {
-      if (attempted) {
+      if (completed) {
         navigation.navigate('Result', {
           deThiId: item.id,
           tendethi: item.tendethi,
@@ -177,6 +223,12 @@ export default function MonThiScreen({ navigation }) {
             <Text style={styles.examTitle} numberOfLines={2}>
               {item.tendethi}
             </Text>
+            {completed && (
+              <View style={styles.attemptedBadge}>
+                <Ionicons name="checkmark-circle" size={10} color={colors.success} />
+                <Text style={styles.attemptedBadgeText}>Đã làm</Text>
+              </View>
+            )}
           </View>
           <View style={styles.examMeta}>
             <View style={styles.metaItem}>
@@ -198,27 +250,20 @@ export default function MonThiScreen({ navigation }) {
                 {item.is_full ? '📝 Đề Full' : '⚡ Đề Nhanh'}
               </Text>
             </View>
-            {item.is_new && !attempted && (
+            {item.is_new && !completed && (
               <View style={styles.newChip}>
                 <Text style={styles.newChipText}>MỚI</Text>
               </View>
             )}
-            {attempted && (
+            {completed && (
               <View style={styles.daLamChip}>
-                <Text style={styles.daLamChipText}>Đã làm</Text>
+                <Text style={styles.daLamChipText}>Xem Kết Quả</Text>
               </View>
             )}
           </View>
         </View>
         <View style={styles.examAction}>
-          {attempted ? (
-            <View style={styles.resultButton}>
-              <Ionicons name="checkmark-circle" size={iconSizes.sm} color={colors.success} />
-              <Text style={styles.resultButtonText}>Kết Quả</Text>
-            </View>
-          ) : (
-            <Ionicons name="chevron-forward" size={iconSizes.md} color={colors.textMuted} />
-          )}
+          <Ionicons name="chevron-forward" size={iconSizes.md} color={colors.textMuted} />
         </View>
       </TouchableOpacity>
     );
@@ -438,12 +483,12 @@ const styles = StyleSheet.create({
   sectionFirst: { marginTop: spacing.xxs },
   loadMoreBtn: {
     marginTop: spacing.sm,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.xs,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 44,
+    minHeight: 24,
   },
-  loadMoreText: { ...typography.body, color: colors.primary, fontWeight: '600' },
+  loadMoreText: { ...typography.bodySmall, fontSize: 13, color: colors.primary, fontWeight: '600' },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -498,20 +543,6 @@ const styles = StyleSheet.create({
   examContent: { flex: 1, marginLeft: spacing.sm },
   examAction: {
     marginLeft: spacing.sm,
-  },
-  resultButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.success + '15',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
-  },
-  resultButtonText: {
-    ...typography.bodySmall,
-    color: colors.success,
-    fontWeight: '600',
-    marginLeft: spacing.xs,
   },
   examTitleRow: {
     flexDirection: 'row',

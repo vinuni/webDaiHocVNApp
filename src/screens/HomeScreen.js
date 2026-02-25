@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,7 +20,8 @@ import { colors, spacing, borderRadius, typography, minTouchTargetSize, gradient
 
 export default function HomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const { user, isAuthenticated } = useAuth();
+  const auth = useAuth();
+  const { user, isAuthenticated } = auth;
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -40,6 +42,28 @@ export default function HomeScreen({ navigation }) {
       };
       setData(normalized);
       setLoading(false);
+
+      // Lazy: update DeThi completed status in background (don't block first paint)
+      if (isAuthenticated && normalized.mon_this.length > 0) {
+        apiClient.getCompletedExams().then((completedMap) => {
+          if (completedMap.size === 0) return;
+          setData((prev) => {
+            if (!prev?.mon_this?.length) return prev;
+            return {
+              ...prev,
+              mon_this: prev.mon_this.map((m) => ({
+                ...m,
+                de_this: (m.de_this || []).map((d) => {
+                  const fallbackDiem = completedMap.get(d.id);
+                  const alreadyDone = d.user_attempted === true || (d.user_diem != null && d.user_diem !== '');
+                  if (alreadyDone || fallbackDiem === undefined) return d;
+                  return { ...d, user_attempted: true, user_diem: fallbackDiem };
+                }),
+              })),
+            };
+          });
+        }).catch(() => { /* ignore; home data already shown */ });
+      }
     } catch (err) {
       setData({ mon_this: [], study_materials_summary: [] });
       setLoading(false);
@@ -49,6 +73,12 @@ export default function HomeScreen({ navigation }) {
   useEffect(() => {
     load();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (isAuthenticated && data) load();
+    }, [isAuthenticated])
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -265,9 +295,10 @@ export default function HomeScreen({ navigation }) {
         ) : (
           de_this.map((item, index) => {
             const examColor = item.is_full ? colors.success : colors.primary;
-            const attempted = item.user_attempted === true;
+            const completed = item.user_attempted === true || (item.user_diem != null && item.user_diem !== '');
             const onPress = () => {
               if (!isAuthenticated) {
+                auth.setReturnTo({ screen: 'Home' });
                 Alert.alert(
                   'Yêu cầu đăng nhập',
                   'Bạn cần đăng nhập để làm bài thi. Đăng ký miễn phí ngay!',
@@ -275,13 +306,13 @@ export default function HomeScreen({ navigation }) {
                     { text: 'Hủy', style: 'cancel' },
                     { 
                       text: 'Đăng nhập', 
-                      onPress: () => navigation.navigate('Auth', { screen: 'Login' })
+                      onPress: () => navigation.navigate('Auth', { screen: 'Login', params: { message: 'Vui lòng đăng nhập để làm bài thi' } })
                     }
                   ]
                 );
                 return;
               }
-              if (attempted) {
+              if (completed) {
                 navigation.navigate('Result', {
                   deThiId: item.id,
                   tendethi: item.tendethi,
@@ -302,7 +333,7 @@ export default function HomeScreen({ navigation }) {
                 <View style={styles.examContent}>
                   <View style={styles.examTitleRow}>
                     <Text style={styles.examTitle} numberOfLines={2}>{item.tendethi}</Text>
-                    {attempted && (
+                    {completed && (
                       <View style={styles.attemptedBadge}>
                         <Ionicons name="checkmark-circle" size={10} color={colors.success} />
                         <Text style={styles.attemptedBadgeText}>Đã làm</Text>
@@ -329,27 +360,20 @@ export default function HomeScreen({ navigation }) {
                         {item.is_full ? '📝 Đề Full' : '⚡ Đề Nhanh'}
                       </Text>
                     </View>
-                    {item.is_new && !attempted && (
+                    {item.is_new && !completed && (
                       <View style={styles.newChip}>
                         <Text style={styles.newChipText}>MỚI</Text>
                       </View>
                     )}
-                    {attempted && (
+                    {completed && (
                       <View style={styles.daLamChip}>
-                        <Text style={styles.daLamChipText}>Đã làm</Text>
+                        <Text style={styles.daLamChipText}>Xem Kết Quả</Text>
                       </View>
                     )}
                   </View>
                 </View>
                 <View style={styles.examAction}>
-                  {attempted ? (
-                    <View style={styles.resultButton}>
-                      <Ionicons name="checkmark-circle" size={iconSizes.sm} color={colors.success} />
-                      <Text style={styles.resultButtonText}>Kết Quả</Text>
-                    </View>
-                  ) : (
-                    <Ionicons name="chevron-forward" size={iconSizes.md} color={colors.textMuted} />
-                  )}
+                  <Ionicons name="chevron-forward" size={iconSizes.md} color={colors.textMuted} />
                 </View>
               </TouchableOpacity>
             );
@@ -593,20 +617,6 @@ const styles = StyleSheet.create({
   },
   examAction: {
     marginLeft: spacing.sm,
-  },
-  resultButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.success + '15',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
-  },
-  resultButtonText: {
-    ...typography.bodySmall,
-    color: colors.success,
-    fontWeight: '600',
-    marginLeft: spacing.xs,
   },
   examTitleRow: {
     flexDirection: 'row',

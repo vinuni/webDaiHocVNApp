@@ -9,6 +9,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setTokenState] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [returnTo, setReturnTo] = useState(null); // Store screen to return to after login
 
   const setAuth = (newToken, newUser) => {
     setTokenState(newToken);
@@ -23,8 +24,36 @@ export function AuthProvider({ children }) {
         setTokenState(t);
         setUser(u);
       } else {
-        setTokenState(null);
-        setUser(null);
+        // No valid token - try auto-login with saved credentials
+        const credentials = await authStorage.getCredentials();
+        if (credentials && credentials.email && credentials.password) {
+          try {
+            if (__DEV__) {
+              console.log('[AuthContext] Auto-login with saved credentials');
+            }
+            const data = await apiClient.post('/api/v1/login', {
+              email: credentials.email,
+              password: credentials.password,
+            });
+            const newToken = data.token;
+            const newUser = data.user;
+            await authStorage.setToken(newToken);
+            await authStorage.setUser(newUser);
+            setTokenState(newToken);
+            setUser(newUser);
+          } catch (err) {
+            if (__DEV__) {
+              console.log('[AuthContext] Auto-login failed:', err.message);
+            }
+            // Auto-login failed - credentials might be invalid, clear them
+            await authStorage.clearCredentials();
+            setTokenState(null);
+            setUser(null);
+          }
+        } else {
+          setTokenState(null);
+          setUser(null);
+        }
       }
     } catch {
       setTokenState(null);
@@ -46,7 +75,7 @@ export function AuthProvider({ children }) {
     });
   }, []);
 
-  const login = async (email, password) => {
+  const login = async (email, password, rememberMe = true) => {
     const payload = { email, password };
     if (__DEV__) {
       console.log('[AuthContext] login payload:', payload);
@@ -56,8 +85,26 @@ export function AuthProvider({ children }) {
     const u = data.user;
     await authStorage.setToken(t);
     await authStorage.setUser(u);
+    // Ensure token is readable from storage before continuing (avoids race on web)
+    const stored = await authStorage.getToken();
+    if (!stored && __DEV__) {
+      console.warn('[AuthContext] Token may not be persisted yet');
+    }
+
+    // Save credentials for auto-login if rememberMe is true
+    if (rememberMe) {
+      await authStorage.setCredentials(email, password);
+    } else {
+      await authStorage.clearCredentials();
+    }
+
     setAuth(t, u);
-    return data;
+    
+    // Clear returnTo after successful login
+    const previousReturnTo = returnTo;
+    setReturnTo(null);
+    
+    return { ...data, returnTo: previousReturnTo };
   };
 
   const register = async (name, email, password, password_confirmation) => {
@@ -122,6 +169,8 @@ export function AuthProvider({ children }) {
         logout,
         refreshUser,
         isAuthenticated: !!token,
+        returnTo,
+        setReturnTo,
       }}
     >
       {children}

@@ -67,6 +67,7 @@ function MainTabs() {
         headerTitle: () => null,
         headerLeft: () => <HeaderLeft />,
         headerRight: () => <HeaderRight />,
+        headerRightContainerStyle: { flex: 1, justifyContent: 'flex-end' },
         headerStyle: { ...headerOptions.headerStyle, minHeight: 60 },
         sceneContainerStyle: { paddingTop: 0 },
       }}

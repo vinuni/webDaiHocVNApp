@@ -13,7 +13,7 @@ const logo = require('../../assets/logo.png');
  */
 export function HeaderLeft() {
   const navigation = useNavigation();
-  const goHome = () => navigation.navigate('Home');
+  const goHome = () => navigation.navigate('MainTabs', { screen: 'Home' });
   return (
     <TouchableOpacity style={styles.left} onPress={goHome} activeOpacity={0.7}>
       <Image source={logo} style={styles.logo} resizeMode="contain" />
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.subtitle,
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: '700',
     color: colors.text,
     letterSpacing: 0.5,
@@ -120,8 +120,12 @@ const styles = StyleSheet.create({
   right: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-end',
+    flex: 1,
     gap: spacing.sm,
     paddingVertical: spacing.sm,
+    paddingRight: spacing.xs,
+    minWidth: 0,
   },
   iconBtn: {
     width: 40,
@@ -150,8 +154,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     paddingVertical: spacing.xs,
-    paddingLeft: spacing.xs,
-    maxWidth: 220,
+    paddingHorizontal: spacing.xl,
+    maxWidth: 200,
   },
   avatarWrap: {
     width: 36,

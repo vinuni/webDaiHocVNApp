@@ -12,10 +12,9 @@ import {
   Image,
   ScrollView,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../auth/AuthContext';
-import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize, gradients, iconSizes } from '../theme';
+import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize, iconSizes } from '../theme';
 
 const logo = require('../../assets/logo.png');
 
@@ -60,17 +59,30 @@ function GoogleLoginButton() {
   };
 
   return (
-    <TouchableOpacity style={[styles.socialButton, loading && styles.socialButtonDisabled]} onPress={onPress} disabled={loading} activeOpacity={0.8}>
-      {loading ? <ActivityIndicator size="small" color={colors.primary} /> : <Text style={styles.socialButtonText}>Đăng nhập bằng Google</Text>}
+    <TouchableOpacity style={[styles.socialButton, styles.googleButton, loading && styles.socialButtonDisabled]} onPress={onPress} disabled={loading} activeOpacity={0.8}>
+      {loading ? (
+        <ActivityIndicator size="small" color="#4285F4" />
+      ) : (
+        <>
+          <View style={styles.googleIconWrap}>
+            <Text style={styles.googleIconText}>G</Text>
+          </View>
+          <Text style={styles.googleButtonText}>Đăng nhập bằng Google</Text>
+        </>
+      )}
     </TouchableOpacity>
   );
 }
 
-export default function LoginScreen({ navigation }) {
+export default function LoginScreen({ navigation, route }) {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(true); // Default: remember credentials
   const [loading, setLoading] = useState(false);
+  
+  // Get message from route params if any
+  const message = route?.params?.message;
 
   const getLoginErrorMessage = (e) => {
     const isNetworkError =
@@ -98,7 +110,9 @@ export default function LoginScreen({ navigation }) {
     }
     setLoading(true);
     try {
-      await login(email.trim(), password);
+      await login(email.trim(), password, rememberMe);
+      // Always go to Home to avoid NAVIGATE errors (Auth stack has no Profile/MainTabs).
+      navigation.navigate('Main', { screen: 'MainTabs', params: { screen: 'Home' } });
     } catch (e) {
       const msg = getLoginErrorMessage(e);
       Alert.alert('Đăng nhập thất bại', msg);
@@ -119,27 +133,20 @@ export default function LoginScreen({ navigation }) {
         showsVerticalScrollIndicator={false}
         bounces={false}
       >
-        {/* Gradient Header */}
-        <LinearGradient
-          colors={gradients.primary}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.header}
-        >
-          <View style={styles.logoContainer}>
-            <Image source={logo} style={styles.logo} resizeMode="contain" tintColor="#fff" />
-          </View>
-          <View style={styles.headerTitleRow}>
-            <Ionicons name="document-text-outline" size={iconSizes.lg} color="#fff" style={styles.headerTitleIcon} />
-            <Text style={styles.headerTitle}>Thi Thử Online</Text>
-          </View>
-          <Text style={styles.headerSubtitle}>Nền tảng luyện thi THPT Quốc Gia</Text>
-        </LinearGradient>
-
-        {/* Login Card */}
+        {/* Login Card - logo at top like Register */}
         <View style={styles.card}>
+          <View style={styles.brandRow}>
+            <Image source={logo} style={styles.logoInBrand} resizeMode="contain" />
+            <Text style={styles.brandTitle}>Thi Thử Online</Text>
+          </View>
           <Text style={styles.title}>Đăng nhập</Text>
           <Text style={styles.hint}>Chào mừng bạn trở lại!</Text>
+          
+          {message && (
+            <View style={styles.messageContainer}>
+              <Text style={styles.messageText}>{message}</Text>
+            </View>
+          )}
           
           <View style={styles.inputContainer}>
             <Ionicons name="mail-outline" size={iconSizes.md} color={colors.textMuted} style={styles.inputIcon} />
@@ -167,6 +174,20 @@ export default function LoginScreen({ navigation }) {
               editable={!loading}
             />
           </View>
+
+          <TouchableOpacity 
+            style={styles.rememberMeContainer} 
+            onPress={() => setRememberMe(!rememberMe)} 
+            disabled={loading}
+            activeOpacity={0.7}
+          >
+            <Ionicons 
+              name={rememberMe ? "checkbox" : "square-outline"} 
+              size={iconSizes.md} 
+              color={rememberMe ? colors.primary : colors.textMuted} 
+            />
+            <Text style={styles.rememberMeText}>Ghi nhớ đăng nhập</Text>
+          </TouchableOpacity>
 
           <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading} activeOpacity={0.8}>
             {loading ? (
@@ -213,55 +234,29 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    padding: spacing.lg,
     paddingBottom: 80,
-  },
-  header: {
-    paddingTop: Platform.OS === 'ios' ? spacing.xxl + 20 : spacing.xl,
-    paddingBottom: spacing.xxl,
-    paddingHorizontal: spacing.xl,
-    alignItems: 'center',
-    borderBottomLeftRadius: borderRadius.xxl,
-    borderBottomRightRadius: borderRadius.xxl,
-  },
-  logoContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.md,
-  },
-  logo: { 
-    width: 120, 
-    height: 36,
-  },
-  headerTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.xs,
-  },
-  headerTitleIcon: {
-    marginRight: spacing.sm,
-  },
-  headerTitle: {
-    ...typography.title,
-    color: '#fff',
-  },
-  headerSubtitle: {
-    ...typography.bodySmall,
-    color: 'rgba(255,255,255,0.9)',
   },
   card: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.xl,
     padding: spacing.xl,
-    margin: spacing.lg,
-    marginTop: -spacing.xl,
     borderWidth: 1,
     borderColor: colors.border,
     ...shadows.cardLg,
   },
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    marginBottom: spacing.md,
+    gap: 2,
+  },
+  logoInBrand: {
+    width: 120,
+    height: 36,
+  },
+  brandTitle: { fontSize: 18, fontWeight: '700', color: colors.primary },
   title: { 
     ...typography.titleSmall, 
     marginBottom: spacing.xs, 
@@ -359,10 +354,56 @@ const styles = StyleSheet.create({
     minHeight: minTouchTargetSize,
     flexDirection: 'row',
   },
+  googleButton: {
+    backgroundColor: '#fff',
+    borderColor: '#dadce0',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+  },
+  googleIconWrap: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  googleIconText: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#4285F4',
+  },
+  googleButtonText: {
+    fontSize: 14,
+    color: '#3c4043',
+    fontWeight: '600',
+  },
   socialButtonDisabled: { opacity: 0.7 },
   socialButtonText: { 
     ...typography.body, 
     color: colors.text,
     fontWeight: '600',
+  },
+  rememberMeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.sm,
+    gap: spacing.sm,
+  },
+  rememberMeText: {
+    ...typography.body,
+    color: colors.textSecondary,
+  },
+  messageContainer: {
+    padding: spacing.md,
+    backgroundColor: colors.warning + '15',
+    borderRadius: borderRadius.md,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.warning,
+    marginBottom: spacing.md,
+  },
+  messageText: {
+    ...typography.body,
+    color: colors.text,
   },
 });

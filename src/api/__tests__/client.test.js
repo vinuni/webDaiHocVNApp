@@ -8,6 +8,7 @@ jest.mock('../../auth/storage', () => ({
   authStorage: {
     getToken: jest.fn(() => Promise.resolve('fake-token')),
     getUser: jest.fn(() => Promise.resolve(null)),
+    getCredentials: jest.fn(() => Promise.resolve(null)), // no saved credentials => skip reauth, then clearSession on 401
   },
 }));
 jest.mock('../../auth/sessionManager', () => ({
@@ -24,6 +25,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   global.fetch = jest.fn();
   authStorage.getToken.mockResolvedValue('fake-token');
+  authStorage.getCredentials.mockResolvedValue(null);
 });
 afterAll(() => {
   global.fetch = originalFetch;
