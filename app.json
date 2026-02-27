@@ -3,7 +3,7 @@
     "name": "ThiThu",
     "slug": "thithu",
     "scheme": "thithuonline",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -22,7 +22,21 @@
         "backgroundColor": "#F5E6C8"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.daihoc.vn1.webDaiHocVN73App"
+      "package": "com.daihoc.vn1.webDaiHocVN73App",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "com.daihoc.vn1.webDaiHocVN73App"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"

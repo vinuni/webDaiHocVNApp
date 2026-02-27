@@ -11,8 +11,9 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
-import { apiClient } from '../api/client';
+import { apiClient, ERROR_CODES } from '../api/client';
 import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize } from '../theme';
 
 const PER_PAGE = 20;
@@ -67,6 +68,12 @@ export default function SearchScreen() {
       setTotal(totalCount);
       setPage(pageNum);
     } catch (e) {
+      const body = e?.body;
+      if (e?.status === 422 && body?.code === ERROR_CODES.QUERY_REQUIRED) {
+        Alert.alert('Thiếu từ khóa', 'Vui lòng nhập từ khóa tìm kiếm.', [{ text: 'OK' }]);
+      } else {
+        Alert.alert('Lỗi', e?.message || 'Không thể tìm kiếm.');
+      }
       if (!append) setResults([]);
     } finally {
       setSearching(false);

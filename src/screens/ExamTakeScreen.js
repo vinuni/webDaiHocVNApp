@@ -3,7 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { apiClient } from '../api/client';
+import { apiClient, ERROR_CODES } from '../api/client';
 import MathText from '../components/MathText';
 import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize, gradients, iconSizes } from '../theme';
 import { useRequireAuth } from '../hooks/useRequireAuth';
@@ -75,7 +75,7 @@ export default function ExamTakeScreen({ route, navigation }) {
       } catch (e) {
         if (!mounted) return;
         const body = e?.body;
-        if (e?.status === 403 && body?.code === 'EXAM_COMPLETED' && body?.redirect === 'ket_qua') {
+        if (e?.status === 403 && body?.code === ERROR_CODES.EXAM_COMPLETED && body?.redirect === 'ket_qua') {
           navigation.replace('Result', {
             deThiId: body.dethi_id ?? deThiId,
             tendethi: tendethi || '',
@@ -108,7 +108,22 @@ export default function ExamTakeScreen({ route, navigation }) {
       const res = await apiClient.post(`/api/v1/de-thi/${deThiId}/nop-bai`, { answers: payload });
       navigation.replace('Result', { deThiId, tendethi, ...res });
     } catch (e) {
-      Alert.alert('Lỗi', e?.message || 'Nộp bài thất bại.');
+      const body = e?.body;
+      if (e?.status === 429 && body?.code === ERROR_CODES.LIMIT_REACHED) {
+        Alert.alert(
+          'Đạt giới hạn',
+          'Bạn đã đạt giới hạn số đề thi trong 24 giờ. Vui lòng thử lại sau.',
+          [{ text: 'OK' }]
+        );
+      } else if (e?.status === 403 && body?.code === ERROR_CODES.EXAM_COMPLETED) {
+        navigation.replace('Result', {
+          deThiId: body?.dethi_id ?? deThiId,
+          tendethi: tendethi || '',
+          diem: body?.user_diem,
+        });
+      } else {
+        Alert.alert('Lỗi', e?.message || 'Nộp bài thất bại.');
+      }
     } finally {
       setSubmitting(false);
     }

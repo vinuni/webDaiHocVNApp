@@ -16,6 +16,12 @@ const baseURL = BASE.replace(/\/$/, '');
 
 let isReauthenticating = false; // Prevent multiple simultaneous reauth attempts
 
+export const ERROR_CODES = {
+  EXAM_COMPLETED: 'EXAM_COMPLETED',
+  LIMIT_REACHED: 'LIMIT_REACHED',
+  QUERY_REQUIRED: 'QUERY_REQUIRED',
+};
+
 export const apiClient = {
   baseURL,
 

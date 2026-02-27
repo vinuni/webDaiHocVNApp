@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, ScrollView, Image } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { apiClient } from '../api/client';
@@ -14,6 +14,8 @@ export default function ResultScreen({ route, navigation }) {
   const [loading, setLoading] = useState(true);
   const [expandedQuestions, setExpandedQuestions] = useState({});
   const [fontSizeLevel, setFontSizeLevel] = useState(1);
+  const [loadedAnswers, setLoadedAnswers] = useState({});
+  const [loadingAnswers, setLoadingAnswers] = useState({});
   const contentFontSize = 16 + fontSizeLevel * 2;
 
   useEffect(() => {
@@ -22,12 +24,31 @@ export default function ResultScreen({ route, navigation }) {
     return () => { m = false; };
   }, [deThiId]);
 
+  const fetchAnswer = async (questionId) => {
+    if (loadedAnswers[questionId] || loadingAnswers[questionId]) return;
+    
+    setLoadingAnswers(prev => ({ ...prev, [questionId]: true }));
+    try {
+      const res = await apiClient.get(`/api/v1/ket-qua/${deThiId}/answers/${questionId}`);
+      setLoadedAnswers(prev => ({ ...prev, [questionId]: res }));
+    } catch (e) {
+      Alert.alert('Lỗi', 'Không tải được lời giải');
+    } finally {
+      setLoadingAnswers(prev => ({ ...prev, [questionId]: false }));
+    }
+  };
+
   const toggleQuestion = useCallback((questionId) => {
-    setExpandedQuestions(prev => ({
-      ...prev,
-      [questionId]: !prev[questionId]
-    }));
-  }, []);
+    const wasExpanded = expandedQuestions[questionId];
+    setExpandedQuestions(prev => ({ ...prev, [questionId]: !prev[questionId] }));
+    
+    if (!wasExpanded) {
+      const bailam = bailams.find(b => b.question_id === questionId);
+      if (bailam?.has_short_answer || bailam?.has_detailed_answer) {
+        fetchAnswer(questionId);
+      }
+    }
+  }, [expandedQuestions, deThiId]);
 
   const d = diem != null ? diem : (detail && detail.diem);
   const c = correct != null ? correct : (detail && detail.correct);
@@ -251,6 +272,48 @@ export default function ResultScreen({ route, navigation }) {
                           );
                         })}
                       </View>
+                      
+                      {/* Lazy-loaded answer explanations */}
+                      {(b.has_short_answer || b.has_detailed_answer) && (
+                        <View style={styles.answersSection}>
+                          {loadingAnswers[b.question_id] ? (
+                            <View style={styles.answerLoading}>
+                              <ActivityIndicator size="small" color={colors.primary} />
+                              <Text style={styles.answerLoadingText}>Đang tải lời giải...</Text>
+                            </View>
+                          ) : loadedAnswers[b.question_id] ? (
+                            <>
+                              {loadedAnswers[b.question_id].short_answer && (
+                                <View style={styles.answerBox}>
+                                  <View style={styles.answerHeader}>
+                                    <Ionicons name="information-circle" size={iconSizes.md} color={colors.info} />
+                                    <Text style={styles.answerTitle}>Lời giải ngắn</Text>
+                                  </View>
+                                  <MathText value={loadedAnswers[b.question_id].short_answer} contentFontSize={contentFontSize} />
+                                </View>
+                              )}
+                              {loadedAnswers[b.question_id].detailed_answer && (
+                                <View style={styles.answerBox}>
+                                  <View style={styles.answerHeader}>
+                                    <Ionicons name="book" size={iconSizes.md} color={colors.success} />
+                                    <Text style={styles.answerTitle}>Lời giải chi tiết</Text>
+                                  </View>
+                                  <MathText value={loadedAnswers[b.question_id].detailed_answer} contentFontSize={contentFontSize} />
+                                </View>
+                              )}
+                            </>
+                          ) : (
+                            <TouchableOpacity 
+                              style={styles.loadAnswerBtn}
+                              onPress={() => fetchAnswer(b.question_id)}
+                              activeOpacity={0.7}
+                            >
+                              <Ionicons name="eye" size={iconSizes.md} color={colors.primary} />
+                              <Text style={styles.loadAnswerBtnText}>Xem lời giải</Text>
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      )}
                     </View>
                   )}
                 </View>
@@ -607,5 +670,59 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     width: '100%',
+  },
+  answersSection: {
+    marginTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: spacing.md,
+  },
+  answerLoading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  answerLoadingText: {
+    ...typography.caption,
+    color: colors.textMuted,
+  },
+  answerBox: {
+    backgroundColor: colors.backgroundDark,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  answerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  answerTitle: {
+    ...typography.bodySmall,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  loadAnswerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.primaryTint,
+    borderRadius: borderRadius.md,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    gap: spacing.sm,
+    ...shadows.cardSm,
+  },
+  loadAnswerBtnText: {
+    ...typography.bodySmall,
+    color: colors.primary,
+    fontWeight: '700',
   },
 });

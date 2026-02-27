@@ -212,7 +212,26 @@ Create **three** client IDs (one per application type):
 
 - **Web**: Create “Web application”. Add **Authorized redirect URIs** if your backend or Expo requires them (e.g. Expo’s redirect). Copy the **Client ID** (ends in `.apps.googleusercontent.com`).
 - **iOS**: Create “iOS”. Enter your **iOS bundle ID** (e.g. from `app.json` / EAS: `com.yourapp.name`). For Expo Go use the Expo Go bundle ID (see [Expo Google auth docs](https://docs.expo.dev/guides/authentication/#google)). Copy the **Client ID**.
-- **Android**: Create “Android”. Enter **Package name** (e.g. from `app.json`: `com.yourapp.name`) and the **SHA-1** of your signing key. For debug: `keytool -keystore ~/.android/debug.keystore -list -v` (password often `android`). Copy the **Client ID**.
+- **Android**: Create “Android”. Enter **Package name** (e.g. from `app.json`: `com.yourapp.name`) and the **SHA-1** of your signing key.
+
+#### Getting SHA-1 for Android
+
+For the **build you are testing**, use the matching SHA‑1:
+
+- **Debug build (local / dev build)** – from your **debug keystore**:
+
+  ```bash
+  # Windows PowerShell (uses default debug.keystore)
+  & "$env:JAVA_HOME\bin\keytool.exe" -list -v -keystore "$env:USERPROFILE\.android\debug.keystore" -storepass android -keypass android
+  ```
+
+  Then copy the `SHA1:` fingerprint from the output into the Android OAuth client.
+
+- **Play Store / production build** – from **Play Console**:
+  1. Open **Google Play Console** → your app.
+  2. Go to **Setup** → **App integrity** (or **App signing**).
+  3. In the **App signing key certificate** section, copy the **SHA-1** fingerprint.
+  4. Paste this SHA‑1 into the Android OAuth client in Google Cloud Console.
 
 ### 3. Set variables in `.env`
 

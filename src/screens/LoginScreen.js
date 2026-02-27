@@ -31,7 +31,10 @@ function GoogleLoginButton() {
     useAuthRequest = require('expo-auth-session/providers/google').useAuthRequest;
   } catch {}
   const config = React.useMemo(() => {
-    const c = {};
+    const c = { 
+      scopes: ['profile', 'email'],
+      redirectUri: 'com.daihoc.vn1.webDaiHocVN73App:/oauthredirect',
+    };
     if (webClientId) c.webClientId = webClientId;
     if (iosClientId) c.iosClientId = iosClientId;
     if (androidClientId) c.androidClientId = androidClientId;
@@ -40,22 +43,57 @@ function GoogleLoginButton() {
   const [request, response, promptAsync] = useAuthRequest(config);
 
   React.useEffect(() => {
-    if (!response || response.type !== 'success') return;
-    const token = response.params?.access_token || response.authentication?.accessToken;
+    if (!response) {
+      return;
+    }
+    if (__DEV__) {
+      console.log('[GoogleLogin] response type:', response.type, 'response:', response);
+    }
+    if (response.type !== 'success') {
+      // User cancelled or error before token
+      setLoading(false);
+      if (response.type !== 'dismiss') {
+        Alert.alert('Đăng nhập Google thất bại', `Loại phản hồi: ${response.type}`);
+      }
+      return;
+    }
+    const token =
+      response.params?.access_token ||
+      response.authentication?.accessToken ||
+      response.params?.id_token ||
+      response.authentication?.idToken;
+    if (__DEV__) {
+      console.log('[GoogleLogin] token present:', !!token, 'params:', response.params, 'auth:', response.authentication);
+    }
     if (!token) {
       Alert.alert('Lỗi', 'Không nhận được token từ Google.');
       setLoading(false);
       return;
     }
     setLoading(true);
-    socialLogin('google', token).catch((e) => {
-      Alert.alert('Đăng nhập thất bại', e?.body?.message || e?.message || 'Đăng nhập Google thất bại.');
-    }).finally(() => setLoading(false));
-  }, [response?.type]);
+    socialLogin('google', token)
+      .catch((e) => {
+        if (__DEV__) {
+          console.log('[GoogleLogin] socialLogin error:', e);
+        }
+        Alert.alert('Đăng nhập thất bại', e?.body?.message || e?.message || 'Đăng nhập Google thất bại.');
+      })
+      .finally(() => setLoading(false));
+  }, [response]);
 
   const onPress = () => {
+    if (__DEV__) {
+      console.log('[GoogleLogin] onPress, request ready:', !!request);
+      console.log('[GoogleLogin] config:', config);
+    }
     setLoading(true);
-    promptAsync();
+    promptAsync().catch((e) => {
+      setLoading(false);
+      if (__DEV__) {
+        console.log('[GoogleLogin] promptAsync error:', e);
+      }
+      Alert.alert('Đăng nhập Google thất bại', e?.message || 'Không thể mở màn hình đăng nhập Google.');
+    });
   };
 
   return (

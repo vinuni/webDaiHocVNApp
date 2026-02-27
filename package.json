@@ -1,6 +1,6 @@
 {
   "name": "thithu",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "index.js",
   "scripts": {
     "start": "expo start",
@@ -10,6 +10,7 @@
     "postinstall": "patch-package",
     "test": "jest",
     "test:watch": "jest --watch",
+    "test:integration": "jest --testPathPattern=integration.test.js",
     "test:api": "node scripts/test-home-api.js",
     "test:home-api": "node scripts/test-home-api.js",
     "test:api-get": "node scripts/test-get-api.js"
