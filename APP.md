@@ -95,12 +95,52 @@ Produces an AAB (or APK if configured) for Google Play or direct install. First 
 Requires **Android SDK** and `ANDROID_HOME` (see below).
 
 ```bash
+$env:NODE_ENV = "production"
 npx expo prebuild
 cd android
 .\gradlew assembleRelease
 ```
 
-APK path: `android/app/build/outputs/apk/release/`. For AAB (Play Store): `.\gradlew bundleRelease` → `android/app/build/outputs/bundle/release/`.
+**APK vs AAB (Google Play):**
+
+| Goal | Command | Output |
+|------|---------|--------|
+| **AAB (Google Play)** | `.\gradlew bundleRelease` | `android/app/build/outputs/bundle/release/app-release.aab` |
+| **APK (sideload/testing)** | `.\gradlew assembleRelease` | `android/app/build/outputs/apk/release/` |
+
+Google Play requires an **AAB** (Android App Bundle). Use `bundleRelease` to produce it; use `assembleRelease` only for local/testing APKs. With EAS Build (`eas build --platform android --profile production`), the downloaded artifact is typically an AAB for production.
+
+**Release signing (required for Google Play upload):**  
+Google Play rejects builds signed in debug mode. You must sign the release AAB/APK with a **release keystore**.
+
+1. **Create a release keystore** (once per app). From the project root (PowerShell):
+   ```powershell
+   & "$env:JAVA_HOME\bin\keytool.exe" -genkeypair -v -storetype PKCS12 -keystore android\app\thithu-release-key.keystore -alias thithu-release -keyalg RSA -keysize 2048 -validity 10000
+   ```
+   Enter a store password and key password (and remember them). Keep the keystore file safe and backed up; you need it for all future updates.
+
+2. **Configure Gradle:** In `android/gradle.properties`, uncomment and set the release signing lines (or add them):
+   ```properties
+   MYAPP_RELEASE_STORE_FILE=thithu-release-key.keystore
+   MYAPP_RELEASE_STORE_PASSWORD=your-store-password
+   MYAPP_RELEASE_KEY_ALIAS=thithu-release
+   MYAPP_RELEASE_KEY_PASSWORD=your-key-password
+   ```
+   The store file path is relative to `android/app/`. Do not commit real passwords; use a local override or keep `gradle.properties` with secrets out of version control.
+
+3. **Rebuild:** Run `.\gradlew bundleRelease` again. The AAB will be signed in release mode. Upload `android/app/build/outputs/bundle/release/app-release.aab` to Google Play.
+
+**EAS Build:** If you use `eas build --platform android --profile production`, configure the production credentials in EAS (e.g. `eas credentials`) so the cloud build uses your release keystore instead of debug.
+
+**Deobfuscation file (mapping) for Google Play:**  
+When R8/ProGuard is enabled (`android.enableMinifyInReleaseBuilds=true` in `android/gradle.properties`), each release build generates a **mapping file** so Play Console can show readable stack traces for crashes and ANRs. After running `.\gradlew bundleRelease`, upload the mapping file in Play Console:
+
+1. **Path:** `android/app/build/outputs/mapping/release/mapping.txt`
+2. In **Google Play Console** → your app → **Release** → **App bundle explorer** (or the release that uses this AAB).
+3. Open the release / version that matches the AAB you just uploaded.
+4. Find **Deobfuscation file** or **App bundle explorer** → select the bundle → **Upload** mapping file, and upload `mapping.txt`.
+
+Upload the mapping file that was produced by the *same* build as the AAB you uploaded (each new build has a new mapping file). This removes the warning and makes crash reports readable. If you disable minification (`android.enableMinifyInReleaseBuilds=false`), the warning can be ignored but your app will be larger and stack traces will not be obfuscated.
 
 ### iOS (App Store)
 
@@ -212,6 +252,10 @@ The **backend** (`../webDaiHocVN73`) accepts Google sign-in via **POST /api/v1/s
    - **SHA-1 certificate fingerprint:** add both:
      - **Debug:** from your debug keystore (e.g. `keytool -keystore ~/.android/debug.keystore -list -v`, password `android`; or from Android Studio).
      - **Release:** from the keystore you use to sign the release build (e.g. `thithu-release-key.keystore` → `keytool -keystore android/app/thithu-release-key.keystore -list -v`).
+
+     ```bash
+     & "C:\Program Files\Java\jdk-21.0.10\bin\keytool.exe" -genkeypair -v -storetype PKCS12 -keystore android\app\thithu-release-key.keystore -alias thithu-release -keyalg RSA -keysize 2048 -validity 10000
+     ```
 3. Save. You do **not** add redirect URIs for the Android client type; Google uses package name + SHA-1.
 
 **Backend (.env in webDaiHocVN73):**  

@@ -9,7 +9,7 @@ import IconButton from '../components/IconButton';
 import { colors, spacing, borderRadius, typography, minTouchTargetSize, gradients, shadows, iconSizes, screenPaddingHorizontal } from '../theme';
 
 export default function ResultScreen({ route, navigation }) {
-  const { deThiId, tendethi, diem, correct, total } = route.params || {};
+  const { deThiId, tendethi, diem, correct, total, thoigian: paramThoigian } = route.params || {};
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [expandedQuestions, setExpandedQuestions] = useState({});
@@ -53,6 +53,8 @@ export default function ResultScreen({ route, navigation }) {
   const d = diem != null ? diem : (detail && detail.diem);
   const c = correct != null ? correct : (detail && detail.correct);
   const t = total != null ? total : (detail && detail.total);
+  const totalSeconds = detail?.thoigian ?? paramThoigian ?? 0;
+  const totalMinutes = totalSeconds > 0 ? (totalSeconds / 60).toFixed(1) : null;
 
   const score = d != null ? Number(d) : 0;
   const isPassed = score >= 5;
@@ -132,6 +134,15 @@ export default function ResultScreen({ route, navigation }) {
                   <Text style={[styles.statValue, { color: colors.info }]}>{t ?? '–'}</Text>
                   <Text style={styles.statLabel}>Tổng</Text>
                 </View>
+                {totalMinutes != null && (
+                  <View style={[styles.statBox, styles.statBoxTime]}>
+                    <View style={[styles.statIcon, { backgroundColor: colors.warningTint }]}>
+                      <Ionicons name="time" size={iconSizes.lg} color={colors.warning} />
+                    </View>
+                    <Text style={[styles.statValue, { color: colors.warning }]}>{totalMinutes}</Text>
+                    <Text style={styles.statLabel}>phút</Text>
+                  </View>
+                )}
               </View>
             </>
           )}
@@ -190,6 +201,14 @@ export default function ResultScreen({ route, navigation }) {
                       </View>
                     </View>
                     <View style={styles.answersRowCompact}>
+                      {b.thoigian > 0 && (
+                        <View style={styles.answerItem}>
+                          <Text style={styles.answerLabelCompact}>Thời gian:</Text>
+                          <View style={styles.answerBadge}>
+                            <Text style={styles.answerText}>{b.thoigian}s</Text>
+                          </View>
+                        </View>
+                      )}
                       {b.traloi && (
                         <View style={styles.answerItem}>
                           <Text style={styles.answerLabelCompact}>Bạn:</Text>
@@ -451,6 +470,10 @@ const styles = StyleSheet.create({
   statBoxTotal: {
     backgroundColor: colors.infoTint,
     borderColor: colors.info + '40',
+  },
+  statBoxTime: {
+    backgroundColor: colors.warningTint,
+    borderColor: colors.warning + '40',
   },
   statIcon: {
     width: 44,

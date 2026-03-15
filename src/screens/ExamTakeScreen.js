@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image, PanResponder } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -50,6 +50,9 @@ export default function ExamTakeScreen({ route, navigation }) {
   const [timerReady, setTimerReady] = useState(false);
   // Font size for question/options: 0 = 16, 1 = 18, 2 = 20, 3 = 22, 4 = 24
   const [fontSizeLevel, setFontSizeLevel] = useState(1);
+  const questionDurationsRef = useRef({});
+  const questionStartTimeRef = useRef(Date.now());
+  const prevIndexRef = useRef(0);
 
   if (!isAuthenticated) {
     return (
@@ -97,12 +100,37 @@ export default function ExamTakeScreen({ route, navigation }) {
     return () => clearInterval(t);
   }, [timerReady]);
 
+  // Record time spent on previous question when currentQuestionIndex changes
+  useEffect(() => {
+    if (!questions.length) return;
+    const prev = prevIndexRef.current;
+    if (prev !== currentQuestionIndex) {
+      const elapsed = Math.round((Date.now() - questionStartTimeRef.current) / 1000);
+      const prevQ = questions[prev];
+      if (prevQ?.id && elapsed > 0) {
+        questionDurationsRef.current[prevQ.id] = (questionDurationsRef.current[prevQ.id] || 0) + elapsed;
+      }
+      questionStartTimeRef.current = Date.now();
+      prevIndexRef.current = currentQuestionIndex;
+    }
+  }, [currentQuestionIndex, questions]);
+
   const setAnswer = (questionId, choice) => {
     setAnswers((prev) => ({ ...prev, [questionId]: choice }));
   };
 
   const handleSubmit = async () => {
-    const payload = questions.map((q) => ({ question_id: q.id, answer: answers[q.id] || '', duration_seconds: 0 }));
+    const now = Date.now();
+    const currentQ = questions[currentQuestionIndex];
+    if (currentQ?.id) {
+      const elapsed = Math.round((now - questionStartTimeRef.current) / 1000);
+      questionDurationsRef.current[currentQ.id] = (questionDurationsRef.current[currentQ.id] || 0) + Math.max(0, elapsed);
+    }
+    const payload = questions.map((q) => ({
+      question_id: q.id,
+      answer: answers[q.id] || '',
+      duration_seconds: questionDurationsRef.current[q.id] || 0,
+    }));
     setSubmitting(true);
     try {
       const res = await apiClient.post(`/api/v1/de-thi/${deThiId}/nop-bai`, { answers: payload });
