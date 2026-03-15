@@ -126,8 +126,11 @@ export function AuthProvider({ children }) {
     return data;
   };
 
-  const socialLogin = async (provider, accessToken) => {
-    const data = await apiClient.post('/api/v1/social-login', { provider, access_token: accessToken });
+  const   socialLogin = async (provider, accessToken, idToken = null) => {
+    const body = { provider };
+    if (accessToken) body.access_token = accessToken;
+    if (idToken) body.id_token = idToken;
+    const data = await apiClient.post('/api/v1/social-login', body);
     const t = data.token;
     const u = data.user;
     await authStorage.setToken(t);

@@ -168,6 +168,89 @@ In dev, the console logs each request as `(with auth)` or `(no auth)` so you can
 
 ---
 
+## Google OAuth (web – “redirect_uri doesn’t comply”)
+
+When you sign in with Google on **web** (e.g. `npm run web` at `http://localhost:8081` or `8082`), Google requires the **exact** redirect URI to be registered in the Google Cloud Console. If it isn’t, you’ll see:
+
+> You can't sign in to this app because it doesn't comply with Google's OAuth 2.0 policy. Register the redirect URI in the Google Cloud Console.  
+> Request details: redirect_uri=http://localhost:8082/oauthredirect
+
+**Fix:**
+
+1. Open [Google Cloud Console](https://console.cloud.google.com/) → your project → **APIs & Services** → **Credentials**.
+2. Open the **OAuth 2.0 Client ID** you use for **web** (the one whose Client ID is in `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`). If you only have an Android/iOS client, create a new **Web application** client and use its Client ID for web.
+3. Under **Authorized redirect URIs**, add:
+   - **Local dev:**  
+     `http://localhost:8081/oauthredirect`  
+     `http://localhost:8082/oauthredirect`  
+     (add the port(s) you actually use; Metro often uses 8081, sometimes 8082).
+   - **Production:**  
+     `https://your-domain.com/oauthredirect`  
+     (replace with your real web URL).
+4. Save. The redirect URI in the app (e.g. `http://localhost:8082/oauthredirect`) must **match exactly** what you added (including path `/oauthredirect` and no trailing slash).
+
+The app uses `expo-auth-session`’s `makeRedirectUri({ path: 'oauthredirect' })` on web, so the redirect URI is always `{origin}/oauthredirect` (e.g. `http://localhost:8082/oauthredirect`). Register that full URL in the Console.
+
+---
+
+## Google OAuth (Android app)
+
+The **backend** (`../webDaiHocVN73`) accepts Google sign-in via **POST /api/v1/social-login** with `provider: 'google'` and either `access_token` or `id_token` (or both). The app sends both when available; on Android, Google often returns `id_token`, which the backend validates with `https://oauth2.googleapis.com/tokeninfo`. No backend config change is needed for Android.
+
+**App side:**
+
+- **Package name:** `com.daihoc.vn1.webDaiHocVN73App` (from `app.json` → `android.package`).
+- **Redirect URI** (used by expo-auth-session on native): `com.daihoc.vn1.webDaiHocVN73App:/oauthredirect`.
+- **Env:** set `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` to the **Android** OAuth client ID from Google Cloud Console.
+
+**Google Cloud Console (Android):**
+
+1. [Google Cloud Console](https://console.cloud.google.com/) → your project → **APIs & Services** → **Credentials**.
+2. Create (or edit) an **Android** OAuth 2.0 Client ID:
+   - **Application type:** Android.
+   - **Package name:** `com.daihoc.vn1.webDaiHocVN73App`.
+   - **SHA-1 certificate fingerprint:** add both:
+     - **Debug:** from your debug keystore (e.g. `keytool -keystore ~/.android/debug.keystore -list -v`, password `android`; or from Android Studio).
+     - **Release:** from the keystore you use to sign the release build (e.g. `thithu-release-key.keystore` → `keytool -keystore android/app/thithu-release-key.keystore -list -v`).
+3. Save. You do **not** add redirect URIs for the Android client type; Google uses package name + SHA-1.
+
+**Backend (.env in webDaiHocVN73):**  
+`GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are for the **Web** client (used by Laravel Socialite and by the tokeninfo fallback for `id_token`). The Android client ID is only used inside the app; the backend only needs the web client credentials.
+
+---
+
+## Action items: Google auth before publishing
+
+Complete these before publishing the app (Play Store, App Store, or production web).
+
+### Google Cloud Console
+
+- [ ] **OAuth consent screen** (APIs & Services → OAuth consent screen): App name, support email, and (if External) add production domain; complete verification if going past 100 users or sensitive scopes.
+- [ ] **Web OAuth client** (Credentials → Create → OAuth client ID → Web application):
+  - [ ] Add **Authorized redirect URIs**: `https://your-production-domain.com/oauthredirect` (replace with real production web URL).
+  - [ ] Keep dev URIs if needed: `http://localhost:8081/oauthredirect`, `http://localhost:8082/oauthredirect`.
+- [ ] **Android OAuth client** (Credentials → Create → OAuth client ID → Android):
+  - [ ] Package name: `com.daihoc.vn1.webDaiHocVN73App`.
+  - [ ] Add **SHA-1** for **release** signing key (from Play Console → App integrity / App signing, or from your release keystore).
+  - [ ] Add **SHA-1** for **debug** if you test with debug builds.
+- [ ] **iOS OAuth client** (if publishing to App Store): Create iOS client with your app’s bundle ID and use that Client ID in the app.
+
+### App (this repo)
+
+- [ ] **.env (or EAS Secrets)** for production builds: set `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`, `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID`, and (if iOS) `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` to the Client IDs from the steps above.
+- [ ] **Production web**: Ensure the domain you deploy to is the one added as redirect URI in the Web client (e.g. `https://your-domain.com/oauthredirect`).
+
+### Backend (../webDaiHocVN73)
+
+- [ ] **.env**: `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` set to the **Web** OAuth client’s Client ID and Client Secret (same project as the app clients).
+- [ ] **GOOGLE_REDIRECT** (optional): If the backend does server-side Google OAuth for web, set `GOOGLE_REDIRECT` to your backend callback URL (e.g. `https://your-api.com/login/google/callback`). The mobile app uses token-based social-login only and does not depend on this.
+
+### After publishing
+
+- [ ] Test **Sign in with Google** on production web and on a production (or internal testing) Android build; fix any redirect_uri or SHA-1 errors using the “Google OAuth (web)” and “Google OAuth (Android app)” sections above.
+
+---
+
 ## Summary
 
 | Goal                | Command / step                                                |

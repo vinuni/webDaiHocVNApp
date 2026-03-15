@@ -23,17 +23,25 @@ const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || '';
 const androidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || '';
 const hasGoogleConfig = !!(webClientId || iosClientId || androidClientId);
 
+// Resolve redirect URI: on web use current origin + /oauthredirect (must be added in Google Cloud Console).
+let useAuthRequest = () => [null, null, async () => { }];
+let makeRedirectUri;
+try {
+  const authSession = require('expo-auth-session');
+  useAuthRequest = require('expo-auth-session/providers/google').useAuthRequest;
+  makeRedirectUri = authSession.makeRedirectUri;
+} catch { }
+
 function GoogleLoginButton() {
   const { socialLogin } = useAuth();
   const [loading, setLoading] = useState(false);
-  let useAuthRequest = () => [null, null, async () => { }];
-  try {
-    useAuthRequest = require('expo-auth-session/providers/google').useAuthRequest;
-  } catch { }
   const config = React.useMemo(() => {
+    const redirectUri = Platform.OS === 'web' && makeRedirectUri
+      ? makeRedirectUri({ path: 'oauthredirect' })
+      : 'com.daihoc.vn1.webDaiHocVN73App:/oauthredirect';
     const c = {
       scopes: ['profile', 'email'],
-      redirectUri: 'com.daihoc.vn1.webDaiHocVN73App:/oauthredirect',
+      redirectUri,
     };
     if (webClientId) c.webClientId = webClientId;
     if (iosClientId) c.iosClientId = iosClientId;
@@ -57,13 +65,13 @@ function GoogleLoginButton() {
       }
       return;
     }
-    const token =
-      response.params?.access_token ||
-      response.authentication?.accessToken ||
-      response.params?.id_token ||
-      response.authentication?.idToken;
+    const accessToken =
+      response.params?.access_token || response.authentication?.accessToken || null;
+    const idToken =
+      response.params?.id_token || response.authentication?.idToken || null;
+    const token = accessToken || idToken;
     if (__DEV__) {
-      console.log('[GoogleLogin] token present:', !!token, 'params:', response.params, 'auth:', response.authentication);
+      console.log('[GoogleLogin] tokens:', { hasAccess: !!accessToken, hasId: !!idToken }, 'params:', response.params);
     }
     if (!token) {
       Alert.alert('Lỗi', 'Không nhận được token từ Google.');
@@ -71,7 +79,7 @@ function GoogleLoginButton() {
       return;
     }
     setLoading(true);
-    socialLogin('google', token)
+    socialLogin('google', accessToken || undefined, idToken || undefined)
       .catch((e) => {
         if (__DEV__) {
           console.log('[GoogleLogin] socialLogin error:', e);
