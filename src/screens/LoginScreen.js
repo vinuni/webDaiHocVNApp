@@ -26,12 +26,12 @@ const hasGoogleConfig = !!(webClientId || iosClientId || androidClientId);
 function GoogleLoginButton() {
   const { socialLogin } = useAuth();
   const [loading, setLoading] = useState(false);
-  let useAuthRequest = () => [null, null, async () => {}];
+  let useAuthRequest = () => [null, null, async () => { }];
   try {
     useAuthRequest = require('expo-auth-session/providers/google').useAuthRequest;
-  } catch {}
+  } catch { }
   const config = React.useMemo(() => {
-    const c = { 
+    const c = {
       scopes: ['profile', 'email'],
       redirectUri: 'com.daihoc.vn1.webDaiHocVN73App:/oauthredirect',
     };
@@ -86,6 +86,10 @@ function GoogleLoginButton() {
       console.log('[GoogleLogin] onPress, request ready:', !!request);
       console.log('[GoogleLogin] config:', config);
     }
+    if (!request) {
+      Alert.alert('Lỗi', 'Google chưa sẵn sàng, vui lòng thử lại.');
+      return;
+    }
     setLoading(true);
     promptAsync().catch((e) => {
       setLoading(false);
@@ -118,7 +122,7 @@ export default function LoginScreen({ navigation, route }) {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true); // Default: remember credentials
   const [loading, setLoading] = useState(false);
-  
+
   // Get message from route params if any
   const message = route?.params?.message;
 
@@ -179,13 +183,13 @@ export default function LoginScreen({ navigation, route }) {
           </View>
           <Text style={styles.title}>Đăng nhập</Text>
           <Text style={styles.hint}>Chào mừng bạn trở lại!</Text>
-          
+
           {message && (
             <View style={styles.messageContainer}>
               <Text style={styles.messageText}>{message}</Text>
             </View>
           )}
-          
+
           <View style={styles.inputContainer}>
             <Ionicons name="mail-outline" size={iconSizes.md} color={colors.textMuted} style={styles.inputIcon} />
             <TextInput
@@ -213,16 +217,16 @@ export default function LoginScreen({ navigation, route }) {
             />
           </View>
 
-          <TouchableOpacity 
-            style={styles.rememberMeContainer} 
-            onPress={() => setRememberMe(!rememberMe)} 
+          <TouchableOpacity
+            style={styles.rememberMeContainer}
+            onPress={() => setRememberMe(!rememberMe)}
             disabled={loading}
             activeOpacity={0.7}
           >
-            <Ionicons 
-              name={rememberMe ? "checkbox" : "square-outline"} 
-              size={iconSizes.md} 
-              color={rememberMe ? colors.primary : colors.textMuted} 
+            <Ionicons
+              name={rememberMe ? "checkbox" : "square-outline"}
+              size={iconSizes.md}
+              color={rememberMe ? colors.primary : colors.textMuted}
             />
             <Text style={styles.rememberMeText}>Ghi nhớ đăng nhập</Text>
           </TouchableOpacity>
@@ -266,9 +270,9 @@ export default function LoginScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: colors.background 
+  container: {
+    flex: 1,
+    backgroundColor: colors.background
   },
   scrollContent: {
     flexGrow: 1,
@@ -295,15 +299,15 @@ const styles = StyleSheet.create({
     height: 36,
   },
   brandTitle: { fontSize: 18, fontWeight: '700', color: colors.primary },
-  title: { 
-    ...typography.titleSmall, 
-    marginBottom: spacing.xs, 
-    color: colors.text 
+  title: {
+    ...typography.titleSmall,
+    marginBottom: spacing.xs,
+    color: colors.text
   },
-  hint: { 
-    ...typography.bodySmall, 
-    color: colors.textSecondary, 
-    marginBottom: spacing.xl 
+  hint: {
+    ...typography.bodySmall,
+    color: colors.textSecondary,
+    marginBottom: spacing.xl
   },
   inputContainer: {
     flexDirection: 'row',
@@ -339,16 +343,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
-  buttonText: { 
-    color: '#fff', 
-    ...typography.button 
+  buttonText: {
+    color: '#fff',
+    ...typography.button
   },
-  link: { 
-    marginTop: spacing.md, 
-    alignItems: 'center' 
+  link: {
+    marginTop: spacing.md,
+    alignItems: 'center'
   },
-  linkText: { 
-    color: colors.primary, 
+  linkText: {
+    color: colors.primary,
     ...typography.body,
     fontWeight: '600',
   },
@@ -417,8 +421,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   socialButtonDisabled: { opacity: 0.7 },
-  socialButtonText: { 
-    ...typography.body, 
+  socialButtonText: {
+    ...typography.body,
     color: colors.text,
     fontWeight: '600',
   },

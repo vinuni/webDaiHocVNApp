@@ -26,12 +26,12 @@ const hasGoogleConfig = !!(webClientId || iosClientId || androidClientId);
 function GoogleRegisterButton({ navigation, disabled }) {
   const { socialLogin } = useAuth();
   const [loading, setLoading] = useState(false);
-  let useAuthRequest = () => [null, null, async () => {}];
+  let useAuthRequest = () => [null, null, async () => { }];
   try {
     useAuthRequest = require('expo-auth-session/providers/google').useAuthRequest;
-  } catch {}
+  } catch { }
   const config = React.useMemo(() => {
-    const c = { 
+    const c = {
       scopes: ['profile', 'email'],
       redirectUri: 'com.daihoc.vn1.webDaiHocVN73App:/oauthredirect',
     };
@@ -87,6 +87,10 @@ function GoogleRegisterButton({ navigation, disabled }) {
     if (__DEV__) {
       console.log('[GoogleRegister] onPress, request ready:', !!request);
       console.log('[GoogleRegister] config:', config);
+    }
+    if (!request) {
+      Alert.alert('Lỗi', 'Google chưa sẵn sàng, vui lòng thử lại.');
+      return;
     }
     setLoading(true);
     promptAsync().catch((e) => {
@@ -167,7 +171,7 @@ export default function RegisterScreen({ navigation }) {
     try {
       await register(name.trim(), email.trim(), password, passwordConfirmation);
       // Redirect to home screen
-      navigation.navigate('Main', { screen: 'Home' });
+      navigation.navigate('Main', { screen: 'MainTabs', params: { screen: 'Home' } });
     } catch (e) {
       const msg = getRegisterErrorMessage(e);
       Alert.alert('Đăng ký thất bại', msg);
