@@ -10,7 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { apiClient } from '../api/client';
 import ProgressRing from '../components/ProgressRing';
-import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize, gradients, iconSizes } from '../theme';
+import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize, gradients, iconSizes, screenPaddingHorizontal } from '../theme';
 
 const DEFAULT_GAMIFICATION = { xp: 0, level: 1, badges: [], streak: {}, challenges: [], leaderboard: [] };
 
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
   header: {
     paddingVertical: spacing.xxl,
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: screenPaddingHorizontal,
     alignItems: 'center',
     borderBottomLeftRadius: borderRadius.xxl,
     borderBottomRightRadius: borderRadius.xxl,
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
-    marginHorizontal: spacing.lg,
+    marginHorizontal: screenPaddingHorizontal,
     marginBottom: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,

@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { apiClient } from '../api/client';
-import { colors, spacing, borderRadius, typography, iconSizes, minTouchTargetSize, shadows } from '../theme';
+import { colors, spacing, borderRadius, typography, iconSizes, minTouchTargetSize, shadows, screenPaddingHorizontal } from '../theme';
 
 const PER_PAGE = 10;
 
@@ -217,7 +217,7 @@ export default function TopicDetailScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  content: { paddingVertical: spacing.md, paddingHorizontal: spacing.sm, paddingBottom: spacing.xl },
+  content: { paddingVertical: spacing.md, paddingHorizontal: screenPaddingHorizontal, paddingBottom: spacing.xl },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
   card: { backgroundColor: colors.surface, borderRadius: 12, padding: spacing.lg, borderWidth: 1, borderColor: colors.border },
   title: { ...typography.titleSmall, color: colors.text },

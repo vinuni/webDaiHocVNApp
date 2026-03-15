@@ -84,6 +84,9 @@ export const spacing = {
   xxxl: 64,
 };
 
+/** Horizontal padding for screen content (left/right gap). Slightly smaller than spacing.md for a tighter layout. */
+export const screenPaddingHorizontal = 12;
+
 /** Minimum touch target size (pt) for accessibility and one-handed use on phones. */
 export const minTouchTargetSize = 44;
 

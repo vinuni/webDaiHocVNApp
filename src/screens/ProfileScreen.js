@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../auth/AuthContext';
 import { apiClient } from '../api/client';
 import ProgressRing from '../components/ProgressRing';
-import { colors, spacing, borderRadius, typography, minTouchTargetSize, gradients, iconSizes, shadows } from '../theme';
+import { colors, spacing, borderRadius, typography, minTouchTargetSize, gradients, iconSizes, shadows, screenPaddingHorizontal } from '../theme';
 import { useRequireAuth } from '../hooks/useRequireAuth';
 
 let ImagePicker = null;
@@ -404,7 +404,7 @@ const styles = StyleSheet.create({
   header: {
     paddingTop: spacing.xxl + 40,
     paddingBottom: spacing.xxl,
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: screenPaddingHorizontal,
     alignItems: 'center',
     borderBottomLeftRadius: borderRadius.xxl,
     borderBottomRightRadius: borderRadius.xxl,
@@ -479,7 +479,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.warning, 
     padding: spacing.md, 
-    marginHorizontal: spacing.lg,
+    marginHorizontal: screenPaddingHorizontal,
     marginTop: spacing.lg,
     borderRadius: borderRadius.md,
   },
@@ -494,7 +494,7 @@ const styles = StyleSheet.create({
   menuCard: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
-    marginHorizontal: spacing.lg,
+    marginHorizontal: screenPaddingHorizontal,
     marginTop: spacing.lg,
     padding: spacing.xs,
     borderWidth: 1,
@@ -533,7 +533,7 @@ const styles = StyleSheet.create({
     padding: spacing.md, 
     borderRadius: borderRadius.md, 
     minHeight: minTouchTargetSize,
-    marginHorizontal: spacing.lg,
+    marginHorizontal: screenPaddingHorizontal,
     marginTop: spacing.lg,
     borderWidth: 1.5,
     borderColor: colors.danger,
@@ -548,7 +548,7 @@ const styles = StyleSheet.create({
   thanhTichCard: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
-    marginHorizontal: spacing.lg,
+    marginHorizontal: screenPaddingHorizontal,
     marginTop: spacing.lg,
     padding: spacing.lg,
     borderWidth: 1,
@@ -569,7 +569,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
-    marginHorizontal: spacing.lg,
+    marginHorizontal: screenPaddingHorizontal,
     marginTop: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,

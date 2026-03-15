@@ -12,7 +12,7 @@ import {
   Platform,
 } from 'react-native';
 import { apiClient } from '../api/client';
-import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize } from '../theme';
+import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize, screenPaddingHorizontal } from '../theme';
 
 const PER_PAGE = 20;
 

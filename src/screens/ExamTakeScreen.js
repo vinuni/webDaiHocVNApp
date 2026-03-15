@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiClient, ERROR_CODES } from '../api/client';
 import MathText from '../components/MathText';
-import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize, gradients, iconSizes } from '../theme';
+import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize, gradients, iconSizes, screenPaddingHorizontal } from '../theme';
 import { useRequireAuth } from '../hooks/useRequireAuth';
 
 function ExamProgressHeader({ answers, questionsLength, minutesLeft, tendethi, deThiTendethi }) {
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
   emptyText: { ...typography.body, color: colors.textSecondary },
   header: {
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: screenPaddingHorizontal,
     paddingTop: 6,
     paddingBottom: 6,
     borderBottomLeftRadius: borderRadius.xl,
@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
   },
   scroll: { flex: 1 },
   scrollContent: {
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: screenPaddingHorizontal,
     paddingTop: 2,
     paddingBottom: spacing.xxl,
   },

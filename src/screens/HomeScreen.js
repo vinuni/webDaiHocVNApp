@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiClient } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { preferencesStorage } from '../storage/preferences';
-import { colors, spacing, borderRadius, typography, minTouchTargetSize, gradients, shadows, iconSizes } from '../theme';
+import { colors, spacing, borderRadius, typography, minTouchTargetSize, gradients, shadows, iconSizes, screenPaddingHorizontal } from '../theme';
 
 export default function HomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -410,7 +410,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background 
   },
   headerBanner: {
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: screenPaddingHorizontal,
     paddingTop: spacing.sm,
     paddingBottom: spacing.md,
     borderBottomLeftRadius: borderRadius.xl,
@@ -448,7 +448,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: screenPaddingHorizontal,
     paddingBottom: spacing.xl,
   },
   introCard: {
@@ -551,7 +551,7 @@ const styles = StyleSheet.create({
   monChip: { 
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.md, 
+    paddingHorizontal: screenPaddingHorizontal, 
     paddingVertical: spacing.sm, 
     backgroundColor: colors.surface, 
     borderRadius: borderRadius.full, 

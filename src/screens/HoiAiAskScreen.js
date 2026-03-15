@@ -15,7 +15,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { apiClient } from '../api/client';
 import MathText from '../components/MathText';
-import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize, iconSizes } from '../theme';
+import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize, iconSizes, screenPaddingHorizontal } from '../theme';
 import { useAuth } from '../auth/AuthContext';
 
 let ImagePicker = null;
@@ -273,7 +273,7 @@ export default function HoiAiAskScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.lg, paddingBottom: 80 },
+  content: { paddingHorizontal: screenPaddingHorizontal, paddingTop: spacing.lg, paddingBottom: 80 },
   card: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,

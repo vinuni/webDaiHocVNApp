@@ -6,7 +6,7 @@ import { apiClient } from '../api/client';
 import MathText from '../components/MathText';
 import ProgressRing from '../components/ProgressRing';
 import IconButton from '../components/IconButton';
-import { colors, spacing, borderRadius, typography, minTouchTargetSize, gradients, shadows, iconSizes } from '../theme';
+import { colors, spacing, borderRadius, typography, minTouchTargetSize, gradients, shadows, iconSizes, screenPaddingHorizontal } from '../theme';
 
 export default function ResultScreen({ route, navigation }) {
   const { deThiId, tendethi, diem, correct, total } = route.params || {};
@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
   header: {
     paddingTop: spacing.xl,
     paddingBottom: spacing.lg,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: screenPaddingHorizontal,
     alignItems: 'center',
     borderBottomLeftRadius: borderRadius.xxl,
     borderBottomRightRadius: borderRadius.xxl,
@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.xl,
     padding: spacing.xl,
     alignItems: 'center',
-    marginHorizontal: spacing.md,
+    marginHorizontal: screenPaddingHorizontal,
     marginTop: spacing.lg,
     marginBottom: spacing.lg,
     borderWidth: 2,
@@ -469,7 +469,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   questionsSection: {
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: screenPaddingHorizontal,
     paddingTop: spacing.xs,
     paddingBottom: spacing.xl,
   },
@@ -560,7 +560,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   questionResultContent: {
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: screenPaddingHorizontal,
     paddingBottom: spacing.md,
     borderTopWidth: 1,
     borderTopColor: colors.border,
@@ -712,7 +712,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: screenPaddingHorizontal,
     backgroundColor: colors.primaryTint,
     borderRadius: borderRadius.md,
     borderWidth: 2,

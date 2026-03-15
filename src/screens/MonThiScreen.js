@@ -21,6 +21,7 @@ import {
   minTouchTargetSize,
   shadows,
   iconSizes,
+  screenPaddingHorizontal,
 } from '../theme';
 
 export default function MonThiScreen({ navigation }) {
@@ -441,7 +442,7 @@ export default function MonThiScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingVertical: spacing.lg, paddingHorizontal: spacing.md, backgroundColor: colors.background },
+  container: { flex: 1, paddingVertical: spacing.lg, paddingHorizontal: screenPaddingHorizontal, backgroundColor: colors.background },
   centered: {
     flex: 1,
     justifyContent: 'center',

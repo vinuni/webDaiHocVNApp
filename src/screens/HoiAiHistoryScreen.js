@@ -13,7 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { apiClient } from '../api/client';
 import MathText from '../components/MathText';
-import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize } from '../theme';
+import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize, screenPaddingHorizontal } from '../theme';
 
 const MINE_PER_PAGE = 3;
 const ALL_PER_PAGE = 5;
@@ -360,7 +360,7 @@ export default function HoiAiHistoryScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  listContent: { padding: spacing.md, paddingBottom: spacing.xl },
+  listContent: { paddingHorizontal: screenPaddingHorizontal, paddingVertical: spacing.md, paddingBottom: spacing.xl },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
   section: {
     marginBottom: spacing.lg,
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
   modalTitle: { ...typography.subtitle, color: colors.text, fontWeight: '600' },
   detailLoading: { padding: spacing.xl, alignItems: 'center' },
   detailScroll: { maxHeight: 400 },
-  detailScrollContent: { padding: spacing.md, paddingBottom: spacing.xl },
+  detailScrollContent: { paddingHorizontal: screenPaddingHorizontal, paddingVertical: spacing.md, paddingBottom: spacing.xl },
   detailUserName: { ...typography.caption, color: colors.primary, fontWeight: '600', marginBottom: 2 },
   detailDate: { ...typography.caption, color: colors.textMuted, marginBottom: 4 },
   detailQuestion: { ...typography.subtitle, color: colors.text, marginBottom: spacing.sm },

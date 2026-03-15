@@ -12,7 +12,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { apiClient } from '../api/client';
-import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize } from '../theme';
+import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize, screenPaddingHorizontal } from '../theme';
 
 export default function ForgotPasswordScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -93,7 +93,7 @@ export default function ForgotPasswordScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  scrollContent: { flexGrow: 1, padding: spacing.lg, paddingBottom: 80 },
+  scrollContent: { flexGrow: 1, paddingHorizontal: screenPaddingHorizontal, paddingTop: spacing.lg, paddingBottom: 80 },
   card: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,

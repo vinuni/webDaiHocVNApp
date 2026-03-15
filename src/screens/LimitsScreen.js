@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
 import { apiClient } from '../api/client';
-import { colors, spacing, borderRadius, typography, minTouchTargetSize } from '../theme';
+import { colors, spacing, borderRadius, typography, minTouchTargetSize, screenPaddingHorizontal } from '../theme';
 
 export default function LimitsScreen() {
   const [limits, setLimits] = useState(null);
@@ -70,7 +70,7 @@ export default function LimitsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.md, paddingBottom: spacing.xl },
+  content: { paddingHorizontal: screenPaddingHorizontal, paddingVertical: spacing.md, paddingBottom: spacing.xl },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
   title: { ...typography.titleSmall, marginBottom: spacing.sm, color: colors.text },
   card: {

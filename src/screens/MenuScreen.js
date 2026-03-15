@@ -17,6 +17,7 @@ import {
   typography,
   iconSizes,
   shadows,
+  screenPaddingHorizontal,
 } from '../theme';
 
 function MenuRow({ icon, iconColor, label, onPress, last }) {
@@ -146,7 +147,7 @@ export default function MenuScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  content: { paddingHorizontal: screenPaddingHorizontal, paddingTop: spacing.lg, paddingBottom: spacing.xxl },
   sectionTitle: {
     ...typography.caption,
     fontWeight: '700',

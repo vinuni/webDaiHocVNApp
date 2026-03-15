@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { apiClient } from '../api/client';
 import MathText from '../components/MathText';
-import { colors, spacing, borderRadius, typography, shadows } from '../theme';
+import { colors, spacing, borderRadius, typography, shadows, screenPaddingHorizontal } from '../theme';
 
 export default function StudyMaterialsScreen({ route }) {
   const hocPhanId = route?.params?.hocPhanId ?? route?.params?.hoc_phan_id;
@@ -133,7 +133,7 @@ export default function StudyMaterialsScreen({ route }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  content: { paddingVertical: spacing.md, paddingHorizontal: spacing.sm, paddingBottom: spacing.xl },
+  content: { paddingVertical: spacing.md, paddingHorizontal: screenPaddingHorizontal, paddingBottom: spacing.xl },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
   emptyState: { flex: 1, justifyContent: 'center', padding: spacing.lg },
   emptyTitle: { ...typography.titleSmall, color: colors.text, marginBottom: spacing.sm },

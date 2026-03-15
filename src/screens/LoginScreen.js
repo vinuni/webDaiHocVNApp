@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../auth/AuthContext';
-import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize, iconSizes } from '../theme';
+import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize, iconSizes, screenPaddingHorizontal } from '../theme';
 
 const logo = require('../../assets/logo.png');
 
@@ -284,7 +284,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    padding: spacing.lg,
+    paddingHorizontal: screenPaddingHorizontal,
+    paddingTop: spacing.lg,
     paddingBottom: 80,
   },
   card: {

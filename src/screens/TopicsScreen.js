@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { apiClient } from '../api/client';
 import EmptyState from '../components/EmptyState';
 import { preferencesStorage, getDefaultMonThiId } from '../storage/preferences';
-import { colors, spacing, borderRadius, typography, minTouchTargetSize, shadows, iconSizes } from '../theme';
+import { colors, spacing, borderRadius, typography, minTouchTargetSize, shadows, iconSizes, screenPaddingHorizontal } from '../theme';
 
 export default function TopicsScreen({ navigation }) {
   const [monThis, setMonThis] = useState([]);
@@ -161,7 +161,7 @@ export default function TopicsScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingVertical: spacing.lg, paddingHorizontal: spacing.md, backgroundColor: colors.background },
+  container: { flex: 1, paddingVertical: spacing.lg, paddingHorizontal: screenPaddingHorizontal, backgroundColor: colors.background },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
   title: { fontSize: 17, fontWeight: '700', marginBottom: spacing.xs, color: colors.text },
   subtitle: { ...typography.bodySmall, color: colors.textSecondary, marginBottom: spacing.xs, flex: 1 },

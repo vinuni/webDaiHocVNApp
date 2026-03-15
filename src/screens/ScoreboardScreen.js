@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { apiClient } from '../api/client';
-import { colors, spacing, borderRadius, typography, minTouchTargetSize, iconSizes } from '../theme';
+import { colors, spacing, borderRadius, typography, minTouchTargetSize, iconSizes, screenPaddingHorizontal } from '../theme';
 
 export default function ScoreboardScreen({ navigation }) {
   const [data, setData] = useState([]);
@@ -61,7 +61,7 @@ export default function ScoreboardScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: spacing.md, backgroundColor: colors.background },
+  container: { flex: 1, paddingHorizontal: screenPaddingHorizontal, paddingVertical: spacing.md, backgroundColor: colors.background },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
   title: { ...typography.titleSmall, marginBottom: 16, color: colors.text },
   row: { flexDirection: 'row', padding: spacing.md, backgroundColor: colors.surface, borderRadius: borderRadius.md, marginBottom: spacing.sm, borderWidth: 1, borderColor: colors.border, alignItems: 'center', minHeight: minTouchTargetSize },

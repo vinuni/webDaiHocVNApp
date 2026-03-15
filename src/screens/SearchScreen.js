@@ -14,7 +14,7 @@ import {
   Alert,
 } from 'react-native';
 import { apiClient, ERROR_CODES } from '../api/client';
-import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize } from '../theme';
+import { colors, spacing, borderRadius, typography, shadows, minTouchTargetSize, screenPaddingHorizontal } from '../theme';
 
 const PER_PAGE = 20;
 
@@ -192,7 +192,7 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
-  searchRow: { flexDirection: 'row', padding: spacing.md, gap: spacing.sm, alignItems: 'center' },
+  searchRow: { flexDirection: 'row', paddingHorizontal: screenPaddingHorizontal, paddingVertical: spacing.md, gap: spacing.sm, alignItems: 'center' },
   input: {
     flex: 1,
     borderWidth: 1,
@@ -212,17 +212,17 @@ const styles = StyleSheet.create({
   },
   searchBtnText: { color: '#fff', ...typography.subtitle },
   filters: { maxHeight: 44, marginBottom: spacing.sm },
-  filtersContent: { paddingHorizontal: spacing.md, alignItems: 'center', gap: spacing.xs },
+  filtersContent: { paddingHorizontal: screenPaddingHorizontal, alignItems: 'center', gap: spacing.xs },
   filterLabel: { ...typography.caption, color: colors.textMuted, marginRight: spacing.xs },
   chip: { paddingHorizontal: spacing.sm, paddingVertical: 6, borderRadius: borderRadius.full, backgroundColor: colors.border, marginRight: spacing.xs },
   chipActive: { backgroundColor: colors.primary },
   chipText: { ...typography.caption, color: colors.text },
-  section: { paddingHorizontal: spacing.md, marginBottom: spacing.sm },
+  section: { paddingHorizontal: screenPaddingHorizontal, marginBottom: spacing.sm },
   sectionTitle: { ...typography.caption, color: colors.textMuted, marginBottom: 4 },
   historyWrap: { flexDirection: 'row', gap: spacing.xs },
   historyChip: { paddingHorizontal: spacing.sm, paddingVertical: 6, borderRadius: borderRadius.full, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   historyChipText: { ...typography.caption, color: colors.text },
-  listContent: { padding: spacing.md, paddingBottom: spacing.xl },
+  listContent: { paddingHorizontal: screenPaddingHorizontal, paddingVertical: spacing.md, paddingBottom: spacing.xl },
   card: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.md,

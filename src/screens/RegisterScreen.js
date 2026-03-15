@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../auth/AuthContext';
-import { colors, spacing, borderRadius, typography, minTouchTargetSize, iconSizes } from '../theme';
+import { colors, spacing, borderRadius, typography, minTouchTargetSize, iconSizes, screenPaddingHorizontal } from '../theme';
 
 const logo = require('../../assets/logo.png');
 
@@ -262,8 +262,8 @@ export default function RegisterScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
-  scrollContent: { flexGrow: 1, paddingHorizontal: 12, paddingTop: 24, paddingBottom: 80 },
-  card: { backgroundColor: '#fff', borderRadius: 16, padding: 24, marginHorizontal: 8, borderWidth: 1, borderColor: '#E2E8F0' },
+  scrollContent: { flexGrow: 1, paddingHorizontal: screenPaddingHorizontal, paddingTop: 24, paddingBottom: 80 },
+  card: { backgroundColor: '#fff', borderRadius: 16, padding: 24, marginHorizontal: 4, borderWidth: 1, borderColor: '#E2E8F0' },
   brandRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   brandIcon: { marginRight: 8 },
   brandTitle: { fontSize: 18, fontWeight: '700', color: colors.primary },
