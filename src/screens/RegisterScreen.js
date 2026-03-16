@@ -35,9 +35,13 @@ function GoogleRegisterButton({ navigation, disabled }) {
   const { socialLogin } = useAuth();
   const [loading, setLoading] = useState(false);
   const config = React.useMemo(() => {
-    const redirectUri = Platform.OS === 'web' && makeRedirectUri
-      ? makeRedirectUri({ path: 'oauthredirect' })
-      : 'com.daihoc.vn1.webDaiHocVN73App:/oauthredirect';
+    // Android: use double-slash (scheme://path) so the app opens after Google redirect. Single slash
+    // leaves user on Google "One moment please..." / Google home with no redirect back to the app.
+    const redirectUri = makeRedirectUri
+      ? (Platform.OS === 'web'
+          ? makeRedirectUri({ path: 'oauthredirect' })
+          : makeRedirectUri({ native: 'com.daihoc.vn1.webDaiHocVN73App://oauthredirect' }))
+      : 'com.daihoc.vn1.webDaiHocVN73App://oauthredirect';
     const c = {
       scopes: ['profile', 'email'],
       redirectUri,

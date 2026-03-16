@@ -240,18 +240,18 @@ The **backend** (`../webDaiHocVN73`) accepts Google sign-in via **POST /api/v1/s
 **App side:**
 
 - **Package name:** `com.daihoc.vn1.webDaiHocVN73App` (from `app.json` → `android.package`).
-- **Redirect URI** (used by expo-auth-session on native): `com.daihoc.vn1.webDaiHocVN73App:/oauthredirect`.
+- **Redirect URI** (used by expo-auth-session on native): `com.daihoc.vn1.webDaiHocVN73App://oauthredirect` (use **double slash** `://` so **Android** opens the app after sign-in; single slash can leave the user on Google’s “One moment please...” with no redirect back — this affects the **Android client** and is fixed by using `makeRedirectUri({ native: '...://oauthredirect' })` in the app).
 - **Env:** set `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` to the **Android** OAuth client ID from Google Cloud Console.
 
 **Google Cloud Console (Android):**
 
 1. [Google Cloud Console](https://console.cloud.google.com/) → your project → **APIs & Services** → **Credentials**.
-2. Create (or edit) an **Android** OAuth 2.0 Client ID:
+2. Create (or edit) **one** Android OAuth 2.0 Client ID (you do **not** create a second app):
    - **Application type:** Android.
    - **Package name:** `com.daihoc.vn1.webDaiHocVN73App`.
-   - **SHA-1 certificate fingerprint:** add both:
-     - **Debug:** from your debug keystore (e.g. `keytool -keystore ~/.android/debug.keystore -list -v`, password `android`; or from Android Studio).
-     - **Release:** from the keystore you use to sign the release build (e.g. `thithu-release-key.keystore` → `keytool -keystore android/app/thithu-release-key.keystore -list -v`).
+   - **SHA-1 certificate fingerprint:** the same client can have **multiple** SHA-1 values. Add the first (e.g. debug), then use **Add fingerprint** (or **+ Add SHA-1**) to add the second (e.g. release). If the UI shows only one text box, add the first SHA-1 and **Save**, then **Edit** the client again and you should see an option to add another fingerprint.
+     - **Debug:** from your debug keystore (e.g. `keytool -keystore ~/.android/debug.keystore -list -v`, password `android`; or from Android Studio). On Windows: `keytool -keystore %USERPROFILE%\.android\debug.keystore -list -v -storepass android -keypass android`.
+     - **Release:** from the keystore you use to sign the release build (e.g. `keytool -keystore android/app/thithu-release-key.keystore -list -v`).
 
      ```bash
      & "C:\Program Files\Java\jdk-21.0.10\bin\keytool.exe" -genkeypair -v -storetype PKCS12 -keystore android\app\thithu-release-key.keystore -alias thithu-release -keyalg RSA -keysize 2048 -validity 10000
@@ -260,6 +260,88 @@ The **backend** (`../webDaiHocVN73`) accepts Google sign-in via **POST /api/v1/s
 
 **Backend (.env in webDaiHocVN73):**  
 `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are for the **Web** client (used by Laravel Socialite and by the tokeninfo fallback for `id_token`). The Android client ID is only used inside the app; the backend only needs the web client credentials.
+
+---
+
+## Google Sign-In flow (Android): how it works
+
+This section explains the flow between the **Android app**, **Google’s servers**, and **your backend**, and what you need for production.
+
+### End-to-end flow (Android → Google → your backend)
+
+```mermaid
+sequenceDiagram
+    participant App as Android app
+    participant Google as Google servers
+    participant Backend as Your backend
+
+    App->>Google: 1. User taps "Google" → app opens consent (Android client ID, package + SHA-1)
+    Google->>App: 2. User signs in → Google returns access_token + id_token to app
+
+    App->>Backend: 3. POST /api/v1/social-login { provider, access_token, id_token }
+    Backend->>Google: 4. Validate token (Socialite or tokeninfo API)
+    Google->>Backend: (valid)
+    Backend->>App: 5. { token, user } (Sanctum) → app stores, user logged in
+```
+
+1. **User taps “Sign in with Google”** in the app.
+2. **App opens Google consent** (in-app or browser). The app uses the **Android** OAuth client ID; Google identifies the app by **package name + SHA-1** (no redirect to your backend).
+3. **User signs in at Google.** Google returns `access_token` and/or `id_token` **to the app** (not to your server).
+4. **App sends tokens to your backend:** `POST /api/v1/social-login` with `provider: 'google'`, `access_token`, and/or `id_token`.
+5. **Backend validates the token** with Google (Socialite for `access_token`, or `https://oauth2.googleapis.com/tokeninfo` for `id_token`), then finds or creates the user and issues a Sanctum token.
+6. **App receives `{ token, user }`**, stores them, and the user is logged in.
+
+So: **Android app ↔ Google** uses the **Android** OAuth client (package name + SHA-1). **App ↔ backend** sends the tokens; **backend ↔ Google** uses the **Web** client to validate them. Google never redirects to your backend for the Android flow.
+
+### Implementation review (app + backend)
+
+Both the frontend app and the Laravel backend implement this flow as follows.
+
+| Step | App (this repo) | Backend (C:\PRO\webDaiHocVN73) |
+|------|-----------------|---------------------------------|
+| **1–2. Open consent, get tokens** | `LoginScreen.js` / `RegisterScreen.js`: `useAuthRequest` with `androidClientId`, `redirectUri`; `promptAsync()`; read `response.params.access_token` and `response.params.id_token` (or `response.authentication`). | — |
+| **3. POST tokens to backend** | `AuthContext.js`: `socialLogin(provider, accessToken, idToken)` builds `{ provider, access_token?, id_token? }` and calls `apiClient.post('/api/v1/social-login', body)`. `src/api/client.js`: base URL from `EXPO_PUBLIC_API_BASE_URL`, JSON body. | `routes/api.php`: `POST /api/v1/social-login` → `AuthController@socialLogin`. |
+| **4. Validate with Google** | — | `AuthController.php` `socialLogin()`: first tries `Socialite::driver($provider)->userFromToken($request->access_token)`; if that fails and `id_token` is present (Google), calls `https://oauth2.googleapis.com/tokeninfo?id_token=...` and builds user from payload. |
+| **5. Return token + user** | — | `AuthController.php`: finds or creates user, then `$user->createToken('api-v1')->plainTextToken`; returns `{ token, token_type: 'Bearer', user }`. |
+| **Store and log in** | `AuthContext.js`: on success, `authStorage.setToken(t)`, `authStorage.setUser(u)`, `setAuth(t, u)`. | — |
+
+**Verified:** Frontend sends `provider`, `access_token`, and/or `id_token`; backend requires at least one token, validates with Google (Socialite or tokeninfo), and returns Sanctum `token` and `user`; app stores both and treats the user as logged in. No gaps in the flow.
+
+### Who uses which credentials
+
+| Role | Uses | Purpose |
+|------|------|--------|
+| **Android app** | **Android** OAuth client ID (`EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID`) | So Google shows consent and returns tokens to this app (identified by package name + SHA-1). |
+| **Google** | **Android** OAuth client: package name + **SHA-1** (debug and/or release) | Ensures the app requesting tokens is really yours. Wrong or missing SHA-1 → “Sign in with Google” can fail. |
+| **Backend** | **Web** OAuth client (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`) | Validates `access_token` (Socialite). For `id_token` it can use tokeninfo (no secret). |
+
+You do **not** create a separate “app” in Play Console for this; you add the **Android** client in Google Cloud and register both SHA-1s there (see “Google OAuth (Android app)” above).
+
+### What to do for production
+
+- **Google Cloud Console → Android OAuth client:** Package name `com.daihoc.vn1.webDaiHocVN73App`. Add **release** SHA-1 (from Play Console → App integrity, or from your release keystore). Add **debug** SHA-1 if you still test debug builds.
+- **App:** Set `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` to the **Android** client ID (e.g. via EAS Secrets or build env). Sign the production build with your **release** keystore so the SHA-1 matches.
+- **Backend:** `.env` has `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` for the **Web** client (for token validation). No backend change needed for the “Android client” — that is only for app ↔ Google.
+- **After uploading to Play:** If you use Play App Signing, get the **SHA-1 from Play Console → App integrity** and add it to the same **Android** OAuth client so production installs from Play are allowed.
+
+---
+
+## Google OAuth 2.0 best practices (compliance check)
+
+Per [Google’s OAuth 2.0 best practices](https://developers.google.com/identity/protocols/oauth2/resources/best-practices):
+
+| Practice | Status | Notes |
+|----------|--------|--------|
+| **Client credentials secure** | ✅ | App: client IDs from env (`EXPO_PUBLIC_GOOGLE_*`), not hardcoded. Backend: `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` from `.env` (gitignored). Never commit secrets. |
+| **User tokens secure** | ✅ | App stores **Sanctum** token (and user/credentials) in **expo-secure-store** on Android/iOS (Keystore/Keychain); on web falls back to AsyncStorage. Google tokens are not stored. Backend revokes token on logout. See `src/auth/storage.js`. |
+| **Refresh token handling** | ✅ | App does not store Google refresh tokens; backend issues Sanctum tokens. Logout revokes current access token (`AuthController@logout`). |
+| **Incremental authorization** | ✅ | Only `profile` and `email` scopes requested, and only for sign-in. No extra scopes requested up front. |
+| **Multiple scopes / consent** | ✅ | Single minimal scope set; no handling needed for partial consent. |
+| **Secure browser (no WebView)** | ✅ | `expo-auth-session` uses **Chrome Custom Tabs** on Android (via `expo-web-browser`), not an embedded WebView. Aligns with “use native OAuth libraries or platform Sign-in” guidance. |
+| **OAuth clients created in Console** | ✅ | Clients are created and configured in Google Cloud Console, not programmatically. |
+| **Remove unused clients** | — | Periodically audit Google Cloud Credentials and delete unused OAuth clients. |
+
+Summary: Client credentials and server-side secrets are handled correctly; token storage on the app is acceptable with an optional improvement (secure store). OAuth flow uses a proper browser (Custom Tabs), minimal scopes, and token revocation on logout.
 
 ---
 

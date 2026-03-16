@@ -1,41 +1,83 @@
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 
 const TOKEN_KEY = '@auth_token';
 const USER_KEY = '@auth_user';
-const CREDENTIALS_KEY = '@auth_credentials'; // Stored credentials for auto-login
+const CREDENTIALS_KEY = '@auth_credentials';
+
+const isNative = Platform.OS === 'android' || Platform.OS === 'ios';
+
+async function secureGet(key) {
+  if (!isNative) return AsyncStorage.getItem(key);
+  try {
+    return await SecureStore.getItemAsync(key);
+  } catch {
+    return null;
+  }
+}
+
+async function secureSet(key, value) {
+  if (!isNative) {
+    if (value != null) await AsyncStorage.setItem(key, value);
+    else await AsyncStorage.removeItem(key);
+    return;
+  }
+  try {
+    if (value != null) await SecureStore.setItemAsync(key, value);
+    else await SecureStore.deleteItemAsync(key);
+  } catch (e) {
+    if (__DEV__) console.warn('[auth/storage] SecureStore set failed:', e?.message);
+  }
+}
+
+async function migrateFromAsyncStorage(key) {
+  if (!isNative) return null;
+  try {
+    const value = await AsyncStorage.getItem(key);
+    if (value != null) {
+      await SecureStore.setItemAsync(key, value);
+      await AsyncStorage.removeItem(key);
+      return value;
+    }
+  } catch {}
+  return null;
+}
 
 export const authStorage = {
   async getToken() {
-    return AsyncStorage.getItem(TOKEN_KEY);
+    let value = await secureGet(TOKEN_KEY);
+    if (value == null) value = await migrateFromAsyncStorage(TOKEN_KEY);
+    return value;
   },
   async setToken(token) {
-    if (token) await AsyncStorage.setItem(TOKEN_KEY, token);
-    else await AsyncStorage.removeItem(TOKEN_KEY);
+    await secureSet(TOKEN_KEY, token || null);
   },
   async getUser() {
-    const raw = await AsyncStorage.getItem(USER_KEY);
+    let raw = await secureGet(USER_KEY);
+    if (raw == null) raw = await migrateFromAsyncStorage(USER_KEY);
     return raw ? JSON.parse(raw) : null;
   },
   async setUser(user) {
-    if (user) await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));
-    else await AsyncStorage.removeItem(USER_KEY);
+    await secureSet(USER_KEY, user ? JSON.stringify(user) : null);
   },
   async getCredentials() {
-    const raw = await AsyncStorage.getItem(CREDENTIALS_KEY);
+    let raw = await secureGet(CREDENTIALS_KEY);
+    if (raw == null) raw = await migrateFromAsyncStorage(CREDENTIALS_KEY);
     return raw ? JSON.parse(raw) : null;
   },
   async setCredentials(email, password) {
     if (email && password) {
-      await AsyncStorage.setItem(CREDENTIALS_KEY, JSON.stringify({ email, password }));
+      await secureSet(CREDENTIALS_KEY, JSON.stringify({ email, password }));
     } else {
-      await AsyncStorage.removeItem(CREDENTIALS_KEY);
+      await secureSet(CREDENTIALS_KEY, null);
     }
   },
   async clearCredentials() {
-    await AsyncStorage.removeItem(CREDENTIALS_KEY);
+    await secureSet(CREDENTIALS_KEY, null);
   },
   async clear() {
-    await AsyncStorage.multiRemove([TOKEN_KEY, USER_KEY]);
-    // Note: credentials are NOT cleared on logout - only when user explicitly unchecks "Remember me"
+    await secureSet(TOKEN_KEY, null);
+    await secureSet(USER_KEY, null);
   },
 };
